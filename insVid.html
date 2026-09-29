@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publicar video</title>
+</head>
+<body>
+    <form action="/tratarInsVid" method="post">
+        <h1>Publicar video</h1>
+        <br>
+        <input type="text" placeholder="Título" name="titulo">
+        <br>
+        <input type="file" accept="video/*" placeholder="escolha o video" name="video" id="video">
+        <br>
+        <textarea placeholder="Descrição" name="descricao"></textarea>
+        <br>
+        <input type="text" placeholder="Autor" name="autor">
+        <br>
+        <input type="submit" value="Publicar">
+    </form>
+    <script>
+        let video = document.getElementById('video');
+        video.addEventListener('change', function() {
+                let file = this.files[0];
+                if(file &&  !file.type.startsWith('video/')){
+                    alert("Somente arquivos de video são aceitos.");
+                    this.value = '';
+                }
+            }
+        )
+    </script>
+</body>
+</html>
