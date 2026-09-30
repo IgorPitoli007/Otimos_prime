@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publicar video</title>
+</head>
+<body>
+    <form action="/tratarUpdVid" method="post" enctype="multipart/form-data">
+        <h1>atualizar video</h1>
+        <br>
+        <input type="text" placeholder="Título" name="titulo" value="<%= video.titulo %>" required>
+        <br>
+        <input type="text" placeholder="Autor" name="autor" value="<%= video.autor %>" required>
+        <br>
+        <input type="file" accept="video/*" placeholder="escolha o video" name="video" id="video">
+        <br>
+        <input type="file" accept="image/*" placeholder="escolha a capa" name="capa" id="capa">
+        <br>
+        <textarea placeholder="Descrição" name="descricao" required><%= video.descricao %></textarea>
+        <br>
+        <input type="hidden" value="<%= video.id %>" name="id">
+        <input type="submit" value="Publicar">
+    </form>
+    <script>
+        let video = document.getElementById('video');
+        video.addEventListener('change', function() {
+                let file = this.files[0];
+                if(file &&  !file.type.startsWith('video/')){
+                    alert("Somente arquivos de video são aceitos.");
+                    this.value = '';
+                }
+            }
+        )
+    </script>
+</body>
+</html>

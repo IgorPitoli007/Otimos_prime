@@ -24,6 +24,10 @@ const Videos = db.define('videos', {
     type: Sequelize.TEXT,
     allowNull: false
   },
+  urlCapa: {
+    type: Sequelize.TEXT,
+    allowNull: false
+  },
 });
 
 module.exports = Videos;

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOME</title>
+</head>
+<body>
+    <a href="/publicar">publicar video</a>
+    <h1>HOME</h1>
+    <% listaVideos.forEach(function(video) { %>
+        <form class="card-video" action="/<%= video.id %>">
+            <button type="submit">
+                <img src="/<%= video.urlCapa %>" alt="Video Cover" width="150px">
+                <h3><%= video.titulo %></h3>
+                <br>
+                <a href="/editar/<%= video.id %>">editar</a>
+                <a href="/apagar/<%= video.id %>">apagar</a>
+            </button>
+        </form>
+    <% }); %>
+</body>
+</html>
