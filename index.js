@@ -2,7 +2,6 @@ const express = require('express');
 const path = require('path');
 const fileUpload = require('express-fileupload');
 const videos = require('./videos');
-const fs = require('fs');
 const app = express();
 // const videos = require('./videos');
 // const pasVid = path.join(__dirname, 'videos');
@@ -27,12 +26,23 @@ app.post('/tratarInsVid', (req, res) => {
     let video = req.files.video;
     let caminhoDestino = path.join(__dirname, 'videos', video.name);
     let caminhoRelativo = path.join("videos", video.name);
-    // console.log(titulo, "\n", video, "\n", descricao, "\n", autor, "\n", caminhoRelativo);
-    video.mv(caminhoDestino, (err) => {
+    console.log(titulo, "\n", video, "\n", descricao, "\n", autor, "\n", caminhoRelativo);
+    video.mv(caminhoDestino, async (err) => {
         if(err){
             return res.status(500).send(err);
         }
-        res.sendFile(path.join(__dirname, 'index.html'));
+        try{
+            await videos.create({
+                autor: autor,
+                titulo: titulo,
+                descricao: descricao,
+                url: caminhoRelativo
+            });
+            res.sendFile(path.join(__dirname, 'index.html'));
+        } catch (dbError) {
+            console.error("Erro ao salvar no banco:", dbError);
+            res.status(500).send("Erro ao salvar as informações do vídeo no banco de dados.");
+        }
     });
 })
 app.listen(8081, () => {
