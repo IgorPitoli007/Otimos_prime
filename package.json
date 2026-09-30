@@ -12,6 +12,8 @@
   "type": "commonjs",
   "dependencies": {
     "express": "^5.2.1",
+    "express-fileupload": "^1.5.2",
+    "fs": "^0.0.1-security",
     "pg": "^8.23.0",
     "sequelize": "^6.37.8"
   }
