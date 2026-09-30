@@ -12,7 +12,15 @@ const Videos = db.define('videos', {
     type: Sequelize.TEXT,
     allowNull: false
   },
+  titulo: {
+    type: Sequelize.TEXT,
+    allowNull: false
+  },
   descricao: {
+    type: Sequelize.TEXT,
+    allowNull: false
+  },
+  url: {
     type: Sequelize.TEXT,
     allowNull: false
   },

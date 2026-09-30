@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const app = express();
 const videos = require('./videos');
+const pasVid = path.join(__dirname, 'videos');
 
 videos.sync({ force: false });
 app.use(express.json());
@@ -18,6 +19,7 @@ app.post('/tratarInsVid', (req, res) => {
     let descricao = req.body.descricao;
     let autor = req.body.autor;
     console.log(titulo, "\n", video, "\n", descricao, "\n", autor);
+
 })
 app.listen(8081, () => {
   console.log('Servidor rodando em http://localhost:8081');
