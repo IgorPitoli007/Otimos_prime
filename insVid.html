@@ -9,13 +9,13 @@
     <form action="/tratarInsVid" method="post">
         <h1>Publicar video</h1>
         <br>
-        <input type="text" placeholder="Título" name="titulo">
+        <input type="text" placeholder="Título" name="titulo" required>
         <br>
-        <input type="text" placeholder="Autor" name="autor">
+        <input type="text" placeholder="Autor" name="autor" required>
         <br>
-        <input type="file" accept="video/*" placeholder="escolha o video" name="video" id="video">
+        <input type="file" accept="video/*" placeholder="escolha o video" name="video" id="video" required>
         <br>
-        <textarea placeholder="Descrição" name="descricao"></textarea>
+        <textarea placeholder="Descrição" name="descricao" required></textarea>
         <br>
         <input type="submit" value="Publicar">
     </form>

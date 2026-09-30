@@ -18,4 +18,4 @@ const Videos = db.define('videos', {
   },
 });
 
-module.exports = videos;
+module.exports = Videos;
