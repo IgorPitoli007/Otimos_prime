@@ -193,10 +193,9 @@ app.post('/tratarLogin', async (req, res) => {
                 id: usuario.id,
             };
             return res.redirect('/');
-        }else{
-            return res.render('login', {email:false});
         }
     }
+    return res.render('login', {email:false});
 });
 app.get('/:id', async (req, res) =>{
     let id = req.params.id;
