@@ -4,20 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HOME</title>
+    <link rel="stylesheet" href="/css/home.css">
 </head>
 <body>
-    <a href="/publicar">publicar video</a>
-    <h1>HOME</h1>
-    <% listaVideos.forEach(function(video) { %>
-        <form class="card-video" action="/<%= video.id %>">
-            <button type="submit">
-                <img src="/<%= video.urlCapa %>" alt="Video Cover" width="150px">
-                <h3><%= video.titulo %></h3>
-                <br>
-                <a href="/editar/<%= video.id %>">editar</a>
-                <a href="/apagar/<%= video.id %>">apagar</a>
-            </button>
-        </form>
-    <% }); %>
+    <header>
+        <h1>OTIMOSPRIME</h1>
+        <a href="/publicar">Publicar vídeo</a>
+    </header>
+    <div id="grade">
+        <% listaVideos.forEach(function(video) { %>
+            <form action="/<%= video.id %>" method="get">
+                <div class="card" onclick="this.closest('form').submit();">
+                    <img src="<%= video.urlCapa %>"></img>
+                    <div class="info">
+                        <h3><%= video.titulo %></h3>
+                        <small>por <%= video.autor %></small>
+                        <p><%= video.descricao %></p>
+                    </div>
+                    <a href="/apagar/<%= video.id %>">excluir</a>
+                    <a href="/editar/<%= video.id %>">editar</a>
+                </div>
+            </form>
+        <% }); %>
+    </div>
 </body>
 </html>

@@ -4,31 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Publicar video</title>
+    <link rel="stylesheet" href="/css/publicar.css">
 </head>
 <body>
-    <form action="/tratarInsVid" method="post" enctype="multipart/form-data">
-        <h1>Publicar video</h1>
-        <br>
-        <input type="text" placeholder="Título" name="titulo" required>
-        <br>
-        <input type="text" placeholder="Autor" name="autor" required>
-        <br>
-        <input type="file" accept="video/*" placeholder="escolha o video" name="video" id="video" required>
-        <br>
-        <input type="file" accept="image/*" placeholder="escolha a capa" name="capa" id="capa" required>
-        <br>
-        <textarea placeholder="Descrição" name="descricao" required></textarea>
-        <br>
-        <input type="submit" value="Publicar">
-    </form>
+    <header>
+        <h1>OTIMOSPRIME</h1>
+        <a href="/">← Voltar para a home</a>
+    </header>
+    <main>
+        <form action="/tratarInsVid" method="post" enctype="multipart/form-data">
+            <h1>Publicar video</h1>
+        
+            <div>
+                <label for="titulo">Título</label>
+                <input type="text" id="titulo" name="titulo" placeholder="Ex: Meu primeiro vídeo" required>
+            </div>
+            <div>
+                <label for="autor">Autor</label>
+                <input type="text" id="autor" name="autor" placeholder="Seu nome" required>
+            </div>
+            <div>
+                <label>Arquivo de vídeo</label>
+                <label class="arquivo" for="video">
+                    📁 Clique para escolher o vídeo
+                    <div id="nomeVideo">Nenhum arquivo escolhido</div>
+                    <input type="file" accept="video/*" name="video" id="video" required>
+                </label>
+            </div>
+            <div>
+                <label>Arquivo de capa</label>
+                <label class="arquivo" for="capa">
+                    📁 Clique para escolher o Capa
+                    <div id="nomeCapa">Nenhum arquivo escolhido</div>
+                    <input type="file" accept="image/*" name="capa" id="capa" required>
+                </label>
+            </div>
+            <textarea placeholder="Descrição" name="descricao" required></textarea>
+            <button type="submit">Publicar</button>
+        </form>
+    </main>
     <script>
         let video = document.getElementById('video');
+        const nomeVideo = document.getElementById('nomeVideo');
+        let capa = document.getElementById('capa');
+        const nomeCapa = document.getElementById('nomeCapa');
         video.addEventListener('change', function() {
                 let file = this.files[0];
                 if(file &&  !file.type.startsWith('video/')){
-                    alert("Somente arquivos de video são aceitos.");
+                    alert("Somente arquivos de vídeo são aceitos.");
                     this.value = '';
                 }
+                nomeVideo.textContent = file ? file.name : 'Nenhum arquivo escolhido';
+            }
+        )
+        capa.addEventListener('change', function() {
+                let file = this.files[0];
+                if(file &&  !file.type.startsWith('image/')){
+                    alert("Somente arquivos de imagem são aceitos.");
+                    this.value = '';
+                }
+                nomeCapa.textContent = file ? file.name : 'Nenhum arquivo escolhido';
             }
         )
     </script>

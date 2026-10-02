@@ -4,8 +4,6 @@ const fileUpload = require('express-fileupload');
 const videos = require('./videos');
 const app = express();
 const fs = require('fs');
-// const videos = require('./videos');
-// const pasVid = path.join(__dirname, 'videos');
 
 // videos.sync({ force: true });
 videos.sync({ force: false });
@@ -15,6 +13,7 @@ app.use(fileUpload());
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'html');
 app.set('views', path.join(__dirname, 'views'));
+app.use('/css', express.static(path.join(__dirname, 'css')));
 app.use('/videos', express.static(path.join(__dirname, 'videos')));
 app.get('/', async (req, res) => {
     try{
@@ -74,10 +73,15 @@ app.post('/tratarInsVid', (req, res) => {
     }
     let video = req.files.video;
     let capa = req.files.capa;
-    let caminhoDestinoVideo = path.join(__dirname, 'videos', video.name);
-    let caminhoRelativoVideo = path.join("videos", video.name);
-    let caminhoDestinoCapa = path.join(__dirname, 'videos', capa.name);
-    let caminhoRelativoCapa = path.join("videos", capa.name);
+    let timestamp = Date.now();
+    let extensaoVideo = path.extname(video.name);
+    let extensaoCapa = path.extname(capa.name);
+    let nomeVideo = timestamp + extensaoVideo;
+    let nomeCapa = timestamp + extensaoCapa;
+    let caminhoDestinoVideo = path.join(__dirname, 'videos', nomeVideo);
+    let caminhoRelativoVideo = path.join("videos", nomeVideo);
+    let caminhoDestinoCapa = path.join(__dirname, 'videos', nomeCapa);
+    let caminhoRelativoCapa = path.join("videos", nomeCapa);
     // console.log(titulo, "\n", video, "\n", descricao, "\n", autor, "\n", caminhoRelativo);
     video.mv(caminhoDestinoVideo, async (err) => {
         if(err){
@@ -107,14 +111,19 @@ app.post('/tratarUpdVid', async (req, res) => {
     let titulo = req.body.titulo;
     let descricao = req.body.descricao;
     let autor = req.body.autor;
-    let capa, video;
+    let capa, video, nomeCapa, nomeVideo;
+    let timestamp = Date.now();
     let id = req.body.id;
     if (req.files) {
         if(req.files.video){
             video = req.files.video;
+            let extensaoVideo = path.extname(video.name);
+            nomeVideo = timestamp + extensaoVideo;
         }
         if(req.files.capa){
             capa = req.files.capa;
+            let extensaoCapa = path.extname(capa.name);
+            nomeCapa = timestamp + extensaoCapa;
         }
     }
     try{
@@ -124,8 +133,8 @@ app.post('/tratarUpdVid', async (req, res) => {
         }
         if(req.files){
             if(req.files.video){
-                let caminhoDestinoVideo = path.join(__dirname, 'videos', video.name);
-                let caminhoRelativoVideo = path.join("videos", video.name);
+                let caminhoDestinoVideo = path.join(__dirname, 'videos', nomeVideo);
+                let caminhoRelativoVideo = path.join("videos", nomeVideo);
                 fs.unlinkSync(videoAtualizado.url);
                 await video.mv(caminhoDestinoVideo, async (err) => {
                     if(err){
@@ -135,8 +144,8 @@ app.post('/tratarUpdVid', async (req, res) => {
                 videoAtualizado.url = caminhoRelativoVideo;
             }
             if(req.files.capa){
-                let caminhoDestinoCapa = path.join(__dirname, 'videos', capa.name);
-                let caminhoRelativoCapa = path.join("videos", capa.name);
+                let caminhoDestinoCapa = path.join(__dirname, 'videos', nomeCapa);
+                let caminhoRelativoCapa = path.join("videos", nomeCapa);
                 fs.unlinkSync(videoAtualizado.urlCapa);
                 await capa.mv(caminhoDestinoCapa, async (err) => {
                     if(err){
