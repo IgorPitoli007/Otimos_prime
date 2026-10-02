@@ -1,15 +1,15 @@
 const express = require('express');
 const path = require('path');
 const fileUpload = require('express-fileupload');
-const videos = require('./videos');
-const usuarios = require('./usuarios');
+const videos = require('./models/videos');
+const usuarios = require('./models/usuarios');
 const session = require('express-session');
 const app = express();
 const fs = require('fs');
+const db = require('./config/db');
 
-// videos.sync({ force: true });
-videos.sync({ force: false });
-usuarios.sync({ force: false });
+// db.sequelize.sync({ force: true });
+db.sequelize.sync({ force: false });
 app.use(session({secret: '123456', resave: false, saveUninitialized: false, cookie: { secure: false }}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -21,11 +21,11 @@ app.use('/css', express.static(path.join(__dirname, 'css')));
 app.use('/videos', express.static(path.join(__dirname, 'videos')));
 app.get('/', async (req, res) => {
     try{
-        const listaVideos = await videos.findAll({ raw: true });
+        const listaVideos = await db.Videos.findAll({ raw: true });
         if(req.session.usuarioLogado){
-            res.render('index', {listaVideos});
+            return res.render('index', {listaVideos, usuario: req.session.usuarioLogado});
         }else{
-            res.render('login', {logado:false});
+            return res.render('login', {logado:false});
         }
     }catch(error){
         console.error("Erro ao buscar vídeos:", error);
@@ -78,12 +78,13 @@ app.post('/tratarInsVid', (req, res) => {
                 return res.status(500).send(err);
             }
             try{
-                await videos.create({
+                await db.Videos.create({
                     autor: autor,
                     titulo: titulo,
                     descricao: descricao,
                     url: caminhoRelativoVideo,
-                    urlCapa: caminhoRelativoCapa
+                    urlCapa: caminhoRelativoCapa,
+                    idUsuario: req.session.usuarioLogado.id 
                 });
                 res.redirect('/');
             } catch (dbError) {
@@ -113,7 +114,7 @@ app.post('/tratarUpdVid', async (req, res) => {
         }
     }
     try{
-        let videoAtualizado = await videos.findByPk(id);
+        let videoAtualizado = await db.Videos.findByPk(id);
         if (!videoAtualizado) {
             return res.status(404).send("Vídeo não encontrado.");
         }
@@ -121,7 +122,7 @@ app.post('/tratarUpdVid', async (req, res) => {
             if(req.files.video){
                 let caminhoDestinoVideo = path.join(__dirname, 'videos', nomeVideo);
                 let caminhoRelativoVideo = path.join("videos", nomeVideo);
-                fs.unlinkSync(videoAtualizado.url);
+                fs.unlinkSync(path.join(__dirname, videoAtualizado.url));
                 await video.mv(caminhoDestinoVideo, async (err) => {
                     if(err){
                         return res.status(500).send(err);
@@ -132,7 +133,7 @@ app.post('/tratarUpdVid', async (req, res) => {
             if(req.files.capa){
                 let caminhoDestinoCapa = path.join(__dirname, 'videos', nomeCapa);
                 let caminhoRelativoCapa = path.join("videos", nomeCapa);
-                fs.unlinkSync(videoAtualizado.urlCapa);
+                fs.unlinkSync(path.join(__dirname, videoAtualizado.urlCapa));
                 await capa.mv(caminhoDestinoCapa, async (err) => {
                     if(err){
                         return res.status(500).send(err);
@@ -162,13 +163,13 @@ app.post('/tratarSign', async (req, res) => {
     let email = req.body.email;
     let senha = req.body.senha;
     try {
-    const usuarioExistente = await usuarios.findOne({ 
+    const usuarioExistente = await db.Usuarios.findOne({ 
       where: { email: email } 
     });
     if (usuarioExistente) {
         return res.render('sign', {email:false})
     }else{
-        await usuarios.create({
+        await db.Usuarios.create({
             nome:nome,
             email:email,
             senha:senha,
@@ -182,7 +183,7 @@ app.post('/tratarSign', async (req, res) => {
 app.post('/tratarLogin', async (req, res) => {
     let email = req.body.email;
     let senha = req.body.senha;
-    const usuario = await usuarios.findOne({ 
+    const usuario = await db.Usuarios.findOne({ 
         where: { email: email } 
     });
     if(usuario){
@@ -199,7 +200,7 @@ app.post('/tratarLogin', async (req, res) => {
 app.get('/:id', async (req, res) =>{
     let id = req.params.id;
     try {
-        const video = await videos.findByPk(id, { raw: true });
+        const video = await db.Videos.findByPk(id, { raw: true });
         if (!video) {
             return res.status(404).send("Vídeo não encontrado.");
         }
@@ -212,12 +213,12 @@ app.get('/:id', async (req, res) =>{
 app.get('/apagar/:id', async (req, res) =>{
     let id = req.params.id;
     try {
-        const video = await videos.findByPk(id);
+        const video = await db.Videos.findByPk(id);
         if (!video) {
             return res.status(404).send("Vídeo não encontrado.");
         }
-        fs.unlinkSync(video.url);
-        fs.unlinkSync(video.urlCapa);
+        fs.unlinkSync(path.join(__dirname, video.url));
+        fs.unlinkSync(path.join(__dirname, video.urlCapa));
         await video.destroy();
         res.redirect('/');
     } catch (error) {
@@ -227,7 +228,7 @@ app.get('/apagar/:id', async (req, res) =>{
 });
 app.get('/editar/:id', async (req, res) =>{
     let id = req.params.id;
-    const video = await videos.findByPk(id);
+    const video = await db.Videos.findByPk(id);
     if (!video) {
         return res.status(404).send("Vídeo não encontrado.");
     }

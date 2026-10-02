@@ -22,8 +22,10 @@
                         <small>por <%= video.autor %></small>
                         <p><%= video.descricao %></p>
                     </div>
-                    <a href="/apagar/<%= video.id %>">excluir</a>
-                    <a href="/editar/<%= video.id %>">editar</a>
+                   <% if(usuario.id == video.idUsuario){ %>
+                        <a href="/apagar/<%= video.id %>">excluir</a>
+                        <a href="/editar/<%= video.id %>">editar</a>
+                   <% } %>
                 </div>
             </form>
         <% }); %>
