@@ -4,13 +4,14 @@ const fileUpload = require('express-fileupload');
 const videos = require('./models/videos');
 const usuarios = require('./models/usuarios');
 const session = require('express-session');
+const SequelizeStore = require('connect-session-sequelize')(session.Store);
 const app = express();
 const fs = require('fs');
 const db = require('./config/db');
 
 // db.sequelize.sync({ force: true });
 db.sequelize.sync({ force: false });
-app.use(session({secret: '123456', resave: false, saveUninitialized: false, cookie: { secure: false }}));
+app.use(session({secret: '123456', store:new SequelizeStore({ db: db.sequelize}), resave: false, saveUninitialized: false, cookie: { secure: false }}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload());
@@ -217,8 +218,14 @@ app.get('/apagar/:id', async (req, res) =>{
         if (!video) {
             return res.status(404).send("Vídeo não encontrado.");
         }
-        fs.unlinkSync(path.join(__dirname, video.url));
-        fs.unlinkSync(path.join(__dirname, video.urlCapa));
+        if(req.files){
+            if(req.files.video){
+                fs.unlinkSync(path.join(__dirname, video.url));
+            }
+            if(req.files.image){
+                fs.unlinkSync(path.join(__dirname, video.urlCapa));
+            }
+        }
         await video.destroy();
         res.redirect('/');
     } catch (error) {
