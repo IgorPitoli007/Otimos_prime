@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publicar video</title>
+    <link rel="stylesheet" href="/css/publicar.css">
+</head>
+<body>
+    <header>
+        <h1>OTIMOSPRIME</h1>
+        <a href="/">← Voltar para a home</a>
+    </header>
+    <main>
+        <form action="/tratarSign" method="post" id="forms">
+            <h1>Criar Conta</h1>
+            <div>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Ex: name@example.com" required>
+            </div>
+            <div>
+                <label for="nome">Nome</label>
+                <input type="text" id="nome" name="nome" placeholder="Seu nome" required>
+            </div>
+            <div>
+                <label for="senha">Senha</label>
+                <input type="text" id="senha" name="senha" placeholder="Senha" required>
+            </div>
+            <div>
+                <label for="senhaV">Digite a Senha denovo</label>
+                <input type="text" id="senhaV" name="senhaV" placeholder="Senha" required>
+            </div>
+            <div>
+                <a  href="/login"><label>Já tem uma conta? clique aqui.</label></a>
+            </div>
+            <button type="submit">Publicar</button>
+        </form>
+    </main>
+    <script>
+        let forms = document.getElementById('forms');
+        forms.addEventListener('submit', function(event){
+            let senha = document.getElementById('senha').value;
+            let senhaV = document.getElementById('senhaV').value;
+            if(senha!=senhaV){
+                event.preventDefault();
+                alert("Senha de validação deve ser igual a senha");
+            }
+        });
+    </script>
+    <% if (typeof email !== 'undefined') { %>
+        <script>
+                alert("Este email já está em uso.");
+        </script>
+    <% } %>
+</body>
+</html>

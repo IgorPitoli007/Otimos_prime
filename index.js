@@ -2,11 +2,15 @@ const express = require('express');
 const path = require('path');
 const fileUpload = require('express-fileupload');
 const videos = require('./videos');
+const usuarios = require('./usuarios');
+const session = require('express-session');
 const app = express();
 const fs = require('fs');
 
 // videos.sync({ force: true });
 videos.sync({ force: false });
+usuarios.sync({ force: false });
+app.use(session({secret: '123456', resave: false, saveUninitialized: false, cookie: { secure: false }}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload());
@@ -18,7 +22,11 @@ app.use('/videos', express.static(path.join(__dirname, 'videos')));
 app.get('/', async (req, res) => {
     try{
         const listaVideos = await videos.findAll({ raw: true });
-        res.render('index', {listaVideos});
+        if(req.session.usuarioLogado){
+            res.render('index', {listaVideos});
+        }else{
+            res.render('login', {logado:false});
+        }
     }catch(error){
         console.error("Erro ao buscar vídeos:", error);
         res.status(500).send("Erro ao carregar a página inicial.");
@@ -27,42 +35,20 @@ app.get('/', async (req, res) => {
 app.get('/publicar', (req, res) => {
     res.render('insVid');
 });
-app.get('/:id', async (req, res) =>{
-    let id = req.params.id;
-    try {
-        const video = await videos.findByPk(id, { raw: true });
-        if (!video) {
-            return res.status(404).send("Vídeo não encontrado.");
-        }
-        res.render('verVid', { video: video });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Erro ao carregar o vídeo.");
-    }
+app.get('/login', (req, res) => {
+    res.render('login');
 });
-app.get('/apagar/:id', async (req, res) =>{
-    let id = req.params.id;
-    try {
-        const video = await videos.findByPk(id);
-        if (!video) {
-            return res.status(404).send("Vídeo não encontrado.");
+app.get('/sign', (req, res) => {
+    res.render('sign');
+});
+app.get('/sair', (req, res)=>{
+    req.session.destroy((err) => {
+        if (err) {
+            console.error("Erro ao encerrar a sessão:", err);
+            return res.status(500).send("Erro ao tentar deslogar.");
         }
-        fs.unlinkSync(video.url);
-        fs.unlinkSync(video.urlCapa);
-        await video.destroy();
         res.redirect('/');
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Erro ao excluir o vídeo.");
-    }
-});
-app.get('/editar/:id', async (req, res) =>{
-    let id = req.params.id;
-    const video = await videos.findByPk(id);
-    if (!video) {
-        return res.status(404).send("Vídeo não encontrado.");
-    }
-    res.render('updVid', {video});
+    });
 });
 app.post('/tratarInsVid', (req, res) => {
     let titulo = req.body.titulo;
@@ -171,6 +157,82 @@ app.post('/tratarUpdVid', async (req, res) => {
         res.status(500).send("Erro ao salvar as modificações do vídeo no sistema.");
     }
 });
+app.post('/tratarSign', async (req, res) => {
+    let nome = req.body.nome;
+    let email = req.body.email;
+    let senha = req.body.senha;
+    try {
+    const usuarioExistente = await usuarios.findOne({ 
+      where: { email: email } 
+    });
+    if (usuarioExistente) {
+        return res.render('sign', {email:false})
+    }else{
+        await usuarios.create({
+            nome:nome,
+            email:email,
+            senha:senha,
+        });
+        return res.redirect('/login');
+    }
+  } catch (error) {
+    return res.status(500).json({ error: "Erro interno do servidor." });
+  }
+});
+app.post('/tratarLogin', async (req, res) => {
+    let email = req.body.email;
+    let senha = req.body.senha;
+    const usuario = await usuarios.findOne({ 
+        where: { email: email } 
+    });
+    if(usuario){
+        if(usuario.senha == senha){
+            req.session.usuarioLogado = {
+                id: usuario.id,
+            };
+            return res.redirect('/');
+        }else{
+            return res.render('login', {email:false});
+        }
+    }
+});
 app.listen(8081, () => {
   console.log('Servidor rodando em http://localhost:8081');
+});
+app.get('/:id', async (req, res) =>{
+    let id = req.params.id;
+    try {
+        const video = await videos.findByPk(id, { raw: true });
+        if (!video) {
+            return res.status(404).send("Vídeo não encontrado.");
+        }
+        res.render('verVid', { video: video });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Erro ao carregar o vídeo.");
+    }
+});
+app.get('/apagar/:id', async (req, res) =>{
+    let id = req.params.id;
+    try {
+        const video = await videos.findByPk(id);
+        if (!video) {
+            return res.status(404).send("Vídeo não encontrado.");
+        }
+        fs.unlinkSync(video.url);
+        fs.unlinkSync(video.urlCapa);
+        await video.destroy();
+        res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Erro ao excluir o vídeo.");
+    }
+});
+app.get('/editar/:id', async (req, res) =>{
+    let id = req.params.id;
+    const video = await videos.findByPk(id);
+    if (!video) {
+        return res.status(404).send("Vídeo não encontrado.");
+    }
+    res.render('updVid', {video});
 });
