@@ -47,7 +47,7 @@ app.get('/sair', (req, res)=>{
             console.error("Erro ao encerrar a sessão:", err);
             return res.status(500).send("Erro ao tentar deslogar.");
         }
-        res.redirect('/');
+        res.redirect('/login');
     });
 });
 app.post('/tratarInsVid', (req, res) => {
@@ -196,9 +196,6 @@ app.post('/tratarLogin', async (req, res) => {
         }
     }
 });
-app.listen(8081, () => {
-  console.log('Servidor rodando em http://localhost:8081');
-});
 app.get('/:id', async (req, res) =>{
     let id = req.params.id;
     try {
@@ -235,4 +232,7 @@ app.get('/editar/:id', async (req, res) =>{
         return res.status(404).send("Vídeo não encontrado.");
     }
     res.render('updVid', {video});
+});
+app.listen(8081, () => {
+  console.log('Servidor rodando em http://localhost:8081');
 });
