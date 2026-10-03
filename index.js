@@ -217,13 +217,11 @@ app.get('/apagar/:id', async (req, res) =>{
         if (!video) {
             return res.status(404).send("Vídeo não encontrado.");
         }
-        if(req.files){
-            if(req.files.video){
-                fs.unlinkSync(path.join(__dirname, video.url));
-            }
-            if(req.files.image){
-                fs.unlinkSync(path.join(__dirname, video.urlCapa));
-            }
+        if(video.url){
+            fs.unlinkSync(path.join(__dirname, video.url));
+        }
+        if(video.urlCapa){
+            fs.unlinkSync(path.join(__dirname, video.urlCapa));
         }
         await video.destroy();
         res.redirect('/');
