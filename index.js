@@ -8,6 +8,7 @@ const SequelizeStore = require('connect-session-sequelize')(session.Store);
 const app = express();
 const fs = require('fs');
 const db = require('./config/db');
+const { where } = require('sequelize');
 
 // db.sequelize.sync({ force: true });
 db.sequelize.sync({ force: false });
@@ -197,6 +198,23 @@ app.post('/tratarLogin', async (req, res) => {
     }
     return res.render('login', {email:false});
 });
+app.post('/comentar', async (req, res) => {
+    let texto = req.body.texto;
+    let idVideo = req.body.id;
+    let idUsuario = req.session.usuarioLogado.id;
+
+    try{
+        await db.Comentarios.create({
+            texto:texto,
+            idUsuario: idUsuario,
+            idVideo: idVideo
+        });
+        res.redirect("/"+idVideo);
+    } catch (dbError) {
+        console.error("Erro ao salvar no banco:", dbError);
+        res.status(500).send("Erro ao salvar as informações do comentário no banco de dados.");
+    }
+});
 app.get('/:id', async (req, res) =>{
     let id = req.params.id;
     try {
@@ -204,7 +222,8 @@ app.get('/:id', async (req, res) =>{
         if (!video) {
             return res.status(404).send("Vídeo não encontrado.");
         }
-        res.render('verVid', { video: video });
+        const listaComentarios = await db.Comentarios.findAll({where: {idVideo:id}, include: [{ model: db.Usuarios }]});
+        res.render('verVid', { video: video, listaComentarios: listaComentarios });
     } catch (error) {
         console.error(error);
         res.status(500).send("Erro ao carregar o vídeo.");

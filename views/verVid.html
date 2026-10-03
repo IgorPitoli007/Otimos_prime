@@ -16,5 +16,14 @@
     <small><%= video.updatedAt.toLocaleDateString('pt-BR'); %></small>
     <p><%= video.descricao %></p>
     <p><%= video.autor %></p>
+    <form action="/comentar" method="post">
+        <input type="text" placeholder="comentar" name="texto">
+        <input type="hidden" value="<%= video.id %>" name="id">
+        <input type="submit">
+    </form>
+    <% listaComentarios.forEach(function(comentario) { %>
+        <br><p><%= comentario.texto %></p>
+        <p><%=  comentario.usuario.nome %></p>
+    <%});%>
 </body>
 </html>
