@@ -7,6 +7,7 @@ const app = express();
 const fs = require('fs');
 const db = require('./config/db');
 const { where } = require('sequelize');
+const comentarios = require('./models/comentarios');
 
 // db.sequelize.sync({ force: true });
 db.sequelize.sync({ force: false });
@@ -216,12 +217,14 @@ app.post('/comentar', async (req, res) => {
 app.get('/:id', async (req, res) =>{
     let id = req.params.id;
     try {
-        const video = await db.Videos.findByPk(id, { raw: true });
+        let video = await db.Videos.findByPk(id, { raw: true });
         if (!video) {
             return res.status(404).send("Vídeo não encontrado.");
         }
-        const listaComentarios = await db.Comentarios.findAll({where: {idVideo:id}, include: [{ model: db.Usuarios }]});
-        res.render('verVid', { video: video, listaComentarios: listaComentarios });
+        let listaComentarios = await db.Comentarios.findAll({where: {idVideo:id}, include: [{ model: db.Usuarios }]});
+        let idUsuario = req.session.usuarioLogado.id;
+        let usuario = await db.Usuarios.findByPk(idUsuario, { raw: true });
+        res.render('verVid', { video: video, listaComentarios: listaComentarios, usuario:usuario});
     } catch (error) {
         console.error(error);
         res.status(500).send("Erro ao carregar o vídeo.");
@@ -245,6 +248,21 @@ app.get('/apagar/:id', async (req, res) =>{
     } catch (error) {
         console.error(error);
         res.status(500).send("Erro ao excluir o vídeo.");
+    }
+});
+app.post('/apagarComentario/:id', async (req, res) =>{
+    let id = req.params.id;
+    let idVideo = req.body.idVideo;
+    try {
+        const comentario = await db.Comentarios.findByPk(id);
+        if (!comentario) {
+            return res.status(404).send("comentário não encontrado.");
+        }
+        await comentario.destroy();
+        res.redirect("/"+idVideo);
+    } catch (error) {
+        console.error("Erro ao apagar comentário:", error);
+        res.status(500).send("Erro ao excluir o comentário.");
     }
 });
 app.get('/editar/:id', async (req, res) =>{

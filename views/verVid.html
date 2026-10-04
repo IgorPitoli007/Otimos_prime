@@ -24,6 +24,13 @@
     <% listaComentarios.forEach(function(comentario) { %>
         <br><p><%= comentario.texto %></p>
         <p><%=  comentario.usuario.nome %></p>
+        <% if(usuario.id == comentario.idUsuario){ %>
+            <form action="/apagarComentario/<%= comentario.id %>" method="post">
+                <input type="hidden" name="idVideo" value="<%= video.id %>">
+                <input type="hidden" name="id" value="<%= comentario.id %>">
+                <button type="submit">excluir</button>
+            </form>
+        <% } %>
     <%});%>
 </body>
 </html>
