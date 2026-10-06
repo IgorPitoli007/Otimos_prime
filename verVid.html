@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= video.titulo %></title>
+    <link rel="stylesheet" href="/css/ver.css">
+</head>
+<body>
+    <header>
+        <a href="/">← Voltar</a>
+    </header>
+
+    <main>
+        <div class="palco">
+            <video controls autoplay playsinline>
+                <source src="/<%= video.url %>" type="video/mp4">
+                Seu navegador não suporta a reprodução de vídeos.
+            </video>
+        </div>
+
+        <div class="detalhes">
+            <h1><%= video.titulo %></h1>
+            <div class="meta">
+                <span class="autor"><%= video.autor %></span>
+                <span class="ponto">•</span>
+                <span class="data"><%= video.updatedAt.toLocaleDateString('pt-BR') %></span>
+            </div>
+            <p class="descricao"><%= video.descricao %></p>
+        </div>
+
+        <section class="comentarios">
+            <h2>Comentários</h2>
+
+            <form action="/comentar" method="post" class="form-comentario">
+                <input type="text" placeholder="Adicione um comentário..." name="texto" required>
+                <input type="hidden" value="<%= video.id %>" name="id">
+                <button type="submit">Enviar</button>
+            </form>
+
+            <div class="lista-comentarios">
+                <% listaComentarios.forEach(function(comentario) { %>
+                    <div class="comentario">
+                        <div class="comentario-corpo">
+                            <p class="comentario-autor"><%= comentario.usuario.nome %></p>
+                            <p class="comentario-texto"><%= comentario.texto %></p>
+                        </div>
+                        <% if(usuario.id == comentario.idUsuario){ %>
+                            <form action="/apagarComentario/<%= comentario.id %>" method="post" class="form-excluir">
+                                <input type="hidden" name="idVideo" value="<%= video.id %>">
+                                <input type="hidden" name="id" value="<%= comentario.id %>">
+                                <button type="submit">excluir</button>
+                            </form>
+                        <% } %>
+                    </div>
+                <% }); %>
+
+                <% if (listaComentarios.length === 0) { %>
+                    <p class="sem-comentarios">Nenhum comentário ainda. Seja o primeiro!</p>
+                <% } %>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

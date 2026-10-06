@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOME</title>
+    <link rel="stylesheet" href="/css/home.css">
+</head>
+<body>
+    <header>
+        <h1>OTIMOSPRIME</h1>
+        <a href="/publicar">Publicar vídeo</a>
+        <a href="/sair">Sair</a>
+    </header>
+    <div id="grade">
+        <% listaVideos.forEach(function(video) { %>
+            <form action="/<%= video.id %>" method="get">
+                <div class="card" onclick="this.closest('form').submit();">
+                    <img src="<%= video.urlCapa %>"></img>
+                    <div class="info">
+                        <h3><%= video.titulo %></h3>
+                        <small>por <%= video.autor %></small>
+                        <p><%= video.descricao %></p>
+                    </div>
+                   <% if(usuario.id == video.idUsuario){ %>
+                        <a href="/apagar/<%= video.id %>">excluir</a>
+                        <a href="/editar/<%= video.id %>">editar</a>
+                   <% } %>
+                </div>
+            </form>
+        <% }); %>
+    </div>
+</body>
+</html>
