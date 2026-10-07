@@ -65,8 +65,9 @@ main {
     color: #ddd;
     line-height: 1.5;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
-
+.detalhes h1 { overflow-wrap: anywhere; }
 .comentarios h2 {
     font-size: 18px;
     margin-bottom: 16px;
@@ -136,6 +137,20 @@ main {
     white-space: nowrap;
 }
 .form-excluir button:hover {
+    color: #fff;
+    border-color: #e50914;
+}
+.form-atualizar button {
+    background: transparent;
+    color: #888;
+    border: 1px solid #333;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.form-atualizar button:hover {
     color: #fff;
     border-color: #e50914;
 }
