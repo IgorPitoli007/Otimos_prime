@@ -1,4 +1,4 @@
-# OtimosPrime
+# OtimosPlay
 
 Plataforma de vídeos estilo rede social, feita com Node.js, Express, PostgreSQL (via Sequelize) e EJS. Permite criar conta, logar, publicar vídeos com capa, comentar, editar e excluir vídeos/comentários.
 
