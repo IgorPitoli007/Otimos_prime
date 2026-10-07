@@ -65,7 +65,9 @@ main {
     color: #ddd;
     line-height: 1.5;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
+.detalhes h1 { overflow-wrap: anywhere; }
 
 .comentarios h2 {
     font-size: 18px;
@@ -114,6 +116,10 @@ main {
     border-bottom: 1px solid #1e1e1e;
     padding-bottom: 14px;
 }
+.comentario-corpo {
+    flex: 1;
+    min-width: 0;
+}
 .comentario-autor {
     font-size: 13px;
     font-weight: bold;
@@ -124,6 +130,8 @@ main {
     font-size: 14px;
     color: #eee;
     line-height: 1.4;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 .form-excluir button {
     background: transparent;
