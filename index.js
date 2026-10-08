@@ -6,9 +6,6 @@ const SequelizeStore = require('connect-session-sequelize')(session.Store);
 const app = express();
 const fs = require('fs');
 const db = require('./config/db');
-const comentarios = require('./models/comentarios');
-const { where, or } = require('sequelize');
-const { Op } = require('sequelize'); 
 const db_mongoose = require('./config/db_mongoose');
 const mongoose = require('mongoose');
 const mensagemSuporte = require('./models/suporte');
@@ -290,7 +287,7 @@ app.get('/pesquisar', async(req, res) =>{
     }
     let texto = req.query.texto;
     try{
-        let listaVideos = await db.Videos.findAll({where: {titulo: {[db.Sequelize.Op.like]: `%${texto}%`}}, raw: true });
+        let listaVideos = await db.Videos.findAll({where: {titulo: {[db.Sequelize.Op.iLike]: `%${texto}%`}}, raw: true });
         return res.render('index', {listaVideos:listaVideos, usuario: req.session.usuarioLogado});
     }catch(erro){
         console.error("Erro ao buscar vídeos:", erro);
@@ -300,6 +297,9 @@ app.get('/pesquisar', async(req, res) =>{
 });
 app.get('/:id', async (req, res) =>{
     let id = req.params.id;
+    if (!Number.isInteger(Number(id))) {
+        return res.status(404).send("Página não encontrada.");
+    }
     try {
         let video = await db.Videos.findByPk(id, { raw: true });
         if (!video) {
