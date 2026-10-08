@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>atualizar critica</title>
+    <link rel="stylesheet" href="/css/publicar.css">
+</head>
+<body>
+    <header>
+        <h1>OTIMOSPRIME</h1>
+        <a href="/">← Voltar para a home</a>
+    </header>
+    <main>
+        <form action="/tratarUpdCritica" method="post" enctype="multipart/form-data">
+            <h1>Editar critica</h1>
+        
+            <div>
+                <label for="textoNovo">Texto</label>
+                <input type="text" id="texto" name="textoNovo" placeholder="Adicione um Critica..." value="<%= critica.texto %>" required>
+            </div>
+            <input type="hidden" value="<%= critica.texto %>" name="texto">
+            <button type="submit">atualizar</button>
+        </form>
+    </main>
+</body>
+</html>

@@ -51,7 +51,7 @@
                                 <input type="hidden" name="id" value="<%= comentario.id %>">
                                 <button type="submit">excluir</button>
                             </form>
-                            <form action="" method="post" class="form-atualizar">
+                            <form action="/UpdComentario/<%= comentario.id %>" method="post" class="form-atualizar">
                                 <input type="hidden" name="idVideo" value="<%= video.id %>">
                                 <input type="hidden" name="id" value="<%= comentario.id %>">
                                 <button type="submit">Atualizar</button>

@@ -28,7 +28,8 @@
                                 <input type="hidden" value="<%= critica.texto %>" name="texto">
                                 <button type="submit">excluir</button>
                             </form>
-                            <form action="" method="post" class="form-atualizar">
+                            <form action="/UpdCritica" method="post" class="form-atualizar">
+                                <input type="hidden" value="<%= critica.texto %>" name="texto">
                                 <button type="submit">Atualizar</button>
                             </form>
                         <% } %>

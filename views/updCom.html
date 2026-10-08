@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>atualizar critica</title>
+    <link rel="stylesheet" href="/css/publicar.css">
+</head>
+<body>
+    <header>
+        <h1>OTIMOSPRIME</h1>
+        <a href="/<%= comentario.idVideo %>">← Voltar para o video</a>
+    </header>
+    <main>
+        <form action="/tratarUpdComentario" method="post" enctype="multipart/form-data">
+            <h1>Editar comentário</h1>
+        
+            <div>
+                <label for="texto">Texto</label>
+                <input type="text" id="texto" name="texto" placeholder="Adicione um comentario..." value="<%= comentario.texto %>" required>
+            </div>
+            <input type="hidden" value="<%= comentario.id %>" name="id">
+            <button type="submit">atualizar</button>
+        </form>
+    </main>
+</body>
+</html>

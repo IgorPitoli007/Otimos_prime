@@ -180,6 +180,39 @@ app.post('/tratarUpdVid', async (req, res) => {
         res.status(500).send("Erro ao salvar as modificações do vídeo no sistema.");
     }
 });
+app.post('/UpdCritica', async (req, res) => {
+    let texto = req.body.texto;
+    let usuario = req.session.usuarioLogado;
+    let idUsuario = usuario.id;
+    let critica = await mensagemSuporte.findOne({
+        texto: texto,
+        idUsuario: idUsuario
+    });
+    res.render('updCri', {critica:critica});
+});
+app.post('/tratarUpdCritica', async (req, res) => {
+    let texto = req.body.texto;
+    let textoNovo = req.body.textoNovo;
+    let usuario = req.session.usuarioLogado;
+    let idUsuario = req.session.usuarioLogado.id;
+    await mensagemSuporte.findOneAndUpdate(
+        { texto:texto, idUsuario:idUsuario },
+        { texto:textoNovo, idUsuario:idUsuario }
+    );
+    let mensagensSuporte = await mensagemSuporte.find({});
+    res.render('suporte', {mensagensSuporte:mensagensSuporte, usuario:usuario});
+});
+app.post('/tratarUpdComentario', async (req, res) => {
+    id = req.body.id;
+    texto = req.body.texto;
+    let comentario = await db.Comentarios.findByPk(id, {include: db.Videos});
+    if (!comentario) {
+        return res.status(404).send("comentario não encontrado.");
+    }
+    comentario.texto = texto;
+    await comentario.save();
+    res.redirect('/'+comentario.video.id);
+});
 app.post('/tratarSign', async (req, res) => {
     let nome = req.body.nome;
     let email = req.body.email;
@@ -285,6 +318,14 @@ app.post('/apagarComentario/:id', async (req, res) =>{
         console.error("Erro ao apagar comentário:", error);
         res.status(500).send("Erro ao excluir o comentário.");
     }
+});
+app.post('/UpdComentario/:id', async (req, res) =>{
+    let id = req.params.id;
+    const comentario = await db.Comentarios.findByPk(id);
+    if (!comentario) {
+        return res.status(404).send("comentario não encontrado.");
+    }
+    res.render('updCom', {comentario:comentario});
 });
 app.get('/editar/:id', async (req, res) =>{
     let id = req.params.id;
