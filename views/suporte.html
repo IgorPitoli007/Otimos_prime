@@ -24,7 +24,8 @@
                             <p class="comentario-texto"><%= critica.texto %></p>
                         </div>
                         <% if(usuario.id == critica.idUsuario){ %>
-                            <form action="/apagarComentario/<%=  %>" method="post" class="form-excluir">
+                            <form action="/apagarCritica" method="post" class="form-excluir">
+                                <input type="hidden" value="<%= critica.texto %>" name="texto">
                                 <button type="submit">excluir</button>
                             </form>
                             <form action="" method="post" class="form-atualizar">

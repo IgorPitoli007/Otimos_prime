@@ -15,9 +15,9 @@ const mensagemSuporte = require('./models/suporte');
 mongoose.connect(db_mongoose.connection)
 .then(() => {
   console.log('conectado');
-}).catch((err) => {
+}).catch((erro) => {
   console.log('erro');
-  console.error(err);
+  console.error(erro);
 });
 // db.sequelize.sync({ force: true });
 db.sequelize.sync({ force: false });
@@ -58,9 +58,9 @@ app.get('/sign', (req, res) => {
     res.render('sign');
 });
 app.get('/sair', (req, res)=>{
-    req.session.destroy((err) => {
-        if (err) {
-            console.error("Erro ao encerrar a sessão:", err);
+    req.session.destroy((erro) => {
+        if (erro) {
+            console.error("Erro ao encerrar a sessão:", erro);
             return res.status(500).send("Erro ao tentar deslogar.");
         }
         res.redirect('/login');
@@ -85,13 +85,13 @@ app.post('/tratarInsVid', (req, res) => {
     let caminhoDestinoCapa = path.join(__dirname, 'videos', nomeCapa);
     let caminhoRelativoCapa = path.join("videos", nomeCapa);
     // console.log(titulo, "\n", video, "\n", descricao, "\n", autor, "\n", caminhoRelativo);
-    video.mv(caminhoDestinoVideo, async (err) => {
-        if(err){
-            return res.status(500).send(err);
+    video.mv(caminhoDestinoVideo, async (erro) => {
+        if(erro){
+            return res.status(500).send(erro);
         }
-        capa.mv(caminhoDestinoCapa, async (err) => {
-            if(err){
-                return res.status(500).send(err);
+        capa.mv(caminhoDestinoCapa, async (erro) => {
+            if(erro){
+                return res.status(500).send(erro);
             }
             try{
                 await db.Videos.create({
@@ -142,9 +142,9 @@ app.post('/tratarUpdVid', async (req, res) => {
                 if(fs.existsSync(VideoAntigo)){
                     fs.unlinkSync(path.join(__dirname, videoAtualizado.url));
                 }
-                await video.mv(caminhoDestinoVideo, async (err) => {
-                    if(err){
-                        return res.status(500).send(err);
+                await video.mv(caminhoDestinoVideo, async (erro) => {
+                    if(erro){
+                        return res.status(500).send(erro);
                     }
                 });
                 videoAtualizado.url = caminhoRelativoVideo;
@@ -156,9 +156,9 @@ app.post('/tratarUpdVid', async (req, res) => {
                 if(fs.existsSync(capaAntiga)){
                     fs.unlinkSync(path.join(__dirname, videoAtualizado.urlCapa));
                 }
-                await capa.mv(caminhoDestinoCapa, async (err) => {
-                    if(err){
-                        return res.status(500).send(err);
+                await capa.mv(caminhoDestinoCapa, async (erro) => {
+                    if(erro){
+                        return res.status(500).send(erro);
                     }
                 });
                 videoAtualizado.urlCapa = caminhoRelativoCapa;
@@ -298,16 +298,34 @@ app.post('/criarCritica', async(req, res) =>{
     let texto = req.body.critica;
     let usuario = req.session.usuarioLogado;
     let idUsuario = usuario.id;
-    new mensagemSuporte({
+    await new mensagemSuporte({
       texto: texto,
       idUsuario:idUsuario
     }).save().then(() => {
       console.log('mensagem para suporte cadastrado');
-    }).catch((err) => {
+    }).catch((erro) => {
       console.log('erro');
+      console.log(erro)
     });
     let mensagensSuporte = await mensagemSuporte.find({});
-    res.render('suporte', {mensagensSuporte: mensagensSuporte, usuario:usuario});
+    res.render('suporte', {mensagensSuporte:mensagensSuporte, usuario:usuario});
+});
+app.post('/apagarCritica', async(req, res) =>{
+    let texto = req.body.texto;
+    let usuario = req.session.usuarioLogado;
+    try{
+        mensagemDeletada = await mensagemSuporte.findOneAndDelete({
+            texto: texto
+        });
+        if(!mensagemDeletada){
+            return res.status(404).json({ erro: "Crítica não encontrada." });
+        }
+        let mensagensSuporte = await mensagemSuporte.find({});
+        return res.render('suporte', {mensagensSuporte:mensagensSuporte, usuario:usuario});
+    }catch(erro){
+        console.error("Erro ao apagar crítica:", error);
+        return res.status(500).json({ erro: "Erro interno do servidor." });
+    }
 });
 app.listen(8081, () => {
   console.log('Servidor rodando em http://localhost:8081');
