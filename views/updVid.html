@@ -44,6 +44,11 @@
             <button type="submit">atualizar</button>
         </form>
     </main>
+    <% if (typeof campos !== 'undefined') { %>
+        <script>
+                alert("Preencha todos os campos.");
+        </script>
+    <% } %>
     <script>
         let video = document.getElementById('video');
         const nomeVideo = document.getElementById('nomeVideo');

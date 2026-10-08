@@ -46,9 +46,15 @@ app.get('/', async (req, res) => {
     }
 });
 app.get('/publicar', (req, res) => {
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     res.render('insVid');
 });
 app.get('/suporte', async (req, res) => {
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     try{
         let mensagensSuporte = await mensagemSuporte.find({});
         let usuario = req.session.usuarioLogado;
@@ -65,6 +71,9 @@ app.get('/sign', (req, res) => {
     res.render('sign');
 });
 app.get('/sair', (req, res)=>{
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     req.session.destroy((erro) => {
         if (erro) {
             console.error("Erro ao encerrar a sessão:", erro);
@@ -74,7 +83,10 @@ app.get('/sair', (req, res)=>{
         res.redirect('/login');
     });
 });
-app.post('/tratarInsVid', (req, res) => {
+app.post('/tratarInsVid', async (req, res) => {
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     let titulo = req.body.titulo;
     let descricao = req.body.descricao;
     let autor = req.body.autor;
@@ -99,39 +111,51 @@ app.post('/tratarInsVid', (req, res) => {
     let caminhoDestinoCapa = path.join(__dirname, 'videos', nomeCapa);
     let caminhoRelativoCapa = path.join("videos", nomeCapa);
     // console.log(titulo, "\n", video, "\n", descricao, "\n", autor, "\n", caminhoRelativo);
-    video.mv(caminhoDestinoVideo, async (erro) => {
-        if(erro){
-            return res.status(500).send(erro);
-        }
-        capa.mv(caminhoDestinoCapa, async (erro) => {
-            if(erro){
-                return res.status(500).send(erro);
-            }
-            try{
-                await db.Videos.create({
-                    autor: autor,
-                    titulo: titulo,
-                    descricao: descricao,
-                    url: caminhoRelativoVideo,
-                    urlCapa: caminhoRelativoCapa,
-                    idUsuario: req.session.usuarioLogado.id 
-                });
-                res.redirect('/');
-            } catch (erro) {
-                console.error("Erro ao salvar no banco:", erro);
-                logger.erro("Erro ao salvar no banco:", erro.message);
-                res.status(500).send("Erro ao salvar as informações do vídeo ou capa no banco de dados.");
-            }
+    try{
+        await video.mv(caminhoDestinoVideo);
+    }catch(erro){
+        logger.erro('erro ao enviar video:', erro.message);
+        return res.status(500).send(erro);
+    }
+    try{
+        await capa.mv(caminhoDestinoCapa);
+    }catch(erro){
+        logger.erro('erro ao enviar capa:', erro.message);
+        return res.status(500).send(erro);
+    }
+    try{
+        await db.Videos.create({
+            autor: autor,
+            titulo: titulo,
+            descricao: descricao,
+            url: caminhoRelativoVideo,
+            urlCapa: caminhoRelativoCapa,
+            idUsuario: req.session.usuarioLogado.id 
         });
-    });
+        res.redirect('/');
+    } catch (erro) {
+        console.error("Erro ao salvar no banco:", erro);
+        logger.erro("Erro ao salvar no banco:", erro.message);
+        res.status(500).send("Erro ao salvar as informações do vídeo ou capa no banco de dados.");
+    }
 });
 app.post('/tratarUpdVid', async (req, res) => {
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     let titulo = req.body.titulo;
     let descricao = req.body.descricao;
     let autor = req.body.autor;
+    let id = req.body.id;
+    if (!titulo.trim() || !descricao.trim() || !autor.trim()) {
+        let video = await db.Videos.findByPk(id);
+        if (!video) {
+            return res.status(404).send("Vídeo não encontrado.");
+        }
+        return res.render('updVid', {campos:false, video});
+    }
     let capa, video, nomeCapa, nomeVideo;
     let timestamp = Date.now();
-    let id = req.body.id;
     if (req.files) {
         if(req.files.video){
             video = req.files.video;
@@ -154,28 +178,30 @@ app.post('/tratarUpdVid', async (req, res) => {
                 let caminhoDestinoVideo = path.join(__dirname, 'videos', nomeVideo);
                 let caminhoRelativoVideo = path.join("videos", nomeVideo);
                 let VideoAntigo = path.join(__dirname, videoAtualizado.url);
+                try{
+                    await video.mv(caminhoDestinoVideo);
+                }catch(erro){
+                    logger.erro('erro ao enviar video:', erro.message);
+                    return res.status(500).send(erro);
+                }
                 if(fs.existsSync(VideoAntigo)){
                     fs.unlinkSync(path.join(__dirname, videoAtualizado.url));
                 }
-                await video.mv(caminhoDestinoVideo, async (erro) => {
-                    if(erro){
-                        return res.status(500).send(erro);
-                    }
-                });
                 videoAtualizado.url = caminhoRelativoVideo;
             }
             if(req.files.capa){
                 let caminhoDestinoCapa = path.join(__dirname, 'videos', nomeCapa);
                 let caminhoRelativoCapa = path.join("videos", nomeCapa);
                 let capaAntiga = path.join(__dirname, videoAtualizado.urlCapa);
+                try{
+                    await capa.mv(caminhoDestinoCapa);
+                }catch(erro){
+                    logger.erro('erro ao enviar capa:', erro.message);
+                    return res.status(500).send(erro);
+                }
                 if(fs.existsSync(capaAntiga)){
                     fs.unlinkSync(path.join(__dirname, videoAtualizado.urlCapa));
                 }
-                await capa.mv(caminhoDestinoCapa, async (erro) => {
-                    if(erro){
-                        return res.status(500).send(erro);
-                    }
-                });
                 videoAtualizado.urlCapa = caminhoRelativoCapa;
             }
         }
@@ -198,6 +224,9 @@ app.post('/tratarUpdVid', async (req, res) => {
     }
 });
 app.post('/UpdCritica', async (req, res) => {
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     let texto = req.body.texto;
     let usuario = req.session.usuarioLogado;
     let idUsuario = usuario.id;
@@ -208,6 +237,9 @@ app.post('/UpdCritica', async (req, res) => {
     res.render('updCri', {critica:critica});
 });
 app.post('/tratarUpdCritica', async (req, res) => {
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     let texto = req.body.texto;
     let textoNovo = req.body.textoNovo;
     let usuario = req.session.usuarioLogado;
@@ -220,6 +252,9 @@ app.post('/tratarUpdCritica', async (req, res) => {
     res.render('suporte', {mensagensSuporte:mensagensSuporte, usuario:usuario});
 });
 app.post('/tratarUpdComentario', async (req, res) => {
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     let id = req.body.id;
     let texto = req.body.texto;
     let comentario = await db.Comentarios.findByPk(id, {include: db.Videos});
@@ -276,6 +311,9 @@ app.post('/tratarLogin', async (req, res) => {
     return res.render('login', {email:false});
 });
 app.post('/comentar', async (req, res) => {
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     let texto = req.body.texto;
     let idVideo = req.body.id;
     let idUsuario = req.session.usuarioLogado.id;
@@ -308,6 +346,9 @@ app.get('/pesquisar', async(req, res) =>{
     }
 });
 app.get('/:id', async (req, res) =>{
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     let id = req.params.id;
     if (!Number.isInteger(Number(id))) {
         return res.status(404).send("Página não encontrada.");
@@ -328,6 +369,9 @@ app.get('/:id', async (req, res) =>{
     }
 });
 app.get('/apagar/:id', async (req, res) =>{
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     let id = req.params.id;
     try {
         let video = await db.Videos.findByPk(id);
@@ -349,6 +393,9 @@ app.get('/apagar/:id', async (req, res) =>{
     }
 });
 app.post('/apagarComentario/:id', async (req, res) =>{
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     let id = req.params.id;
     let idVideo = req.body.idVideo;
     try {
@@ -365,6 +412,9 @@ app.post('/apagarComentario/:id', async (req, res) =>{
     }
 });
 app.post('/UpdComentario/:id', async (req, res) =>{
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     let id = req.params.id;
     let comentario = await db.Comentarios.findByPk(id);
     if (!comentario) {
@@ -373,6 +423,9 @@ app.post('/UpdComentario/:id', async (req, res) =>{
     res.render('updCom', {comentario:comentario});
 });
 app.get('/editar/:id', async (req, res) =>{
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     let id = req.params.id;
     let video = await db.Videos.findByPk(id);
     if (!video) {
@@ -381,6 +434,9 @@ app.get('/editar/:id', async (req, res) =>{
     res.render('updVid', {video});
 });
 app.post('/criarCritica', async(req, res) =>{
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     try{
         let texto = req.body.critica;
         let usuario = req.session.usuarioLogado;
@@ -398,6 +454,9 @@ app.post('/criarCritica', async(req, res) =>{
     }
 });
 app.post('/apagarCritica', async(req, res) =>{
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
     let texto = req.body.texto;
     let usuario = req.session.usuarioLogado;
     let idUsuario = usuario.id;
