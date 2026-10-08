@@ -12,13 +12,16 @@ const { Op } = require('sequelize');
 const db_mongoose = require('./config/db_mongoose');
 const mongoose = require('mongoose');
 const mensagemSuporte = require('./models/suporte');
+const Logger = require('./logger');
+const logger = new Logger();
 
 mongoose.connect(db_mongoose.connection)
 .then(() => {
-  console.log('conectado');
+    console.log('conectado');
 }).catch((erro) => {
-  console.log('erro');
-  console.error(erro);
+    console.log('erro');
+    console.error(erro);
+    logger.erro("Erro ao conectar no mongodb:", erro.message);
 });
 // db.sequelize.sync({ force: true });
 db.sequelize.sync({ force: false });
@@ -37,10 +40,11 @@ app.get('/', async (req, res) => {
         if(req.session.usuarioLogado){
             return res.render('index', {listaVideos, usuario: req.session.usuarioLogado});
         }else{
-            return res.render('login', {logado:false});
+            return res.redirect('/login');
         }
     }catch(erro){
         console.error("Erro ao buscar vídeos:", erro);
+        logger.erro("Erro ao buscar vídeos", erro.message);
         res.status(500).send("Erro ao carregar a página inicial.");
     }
 });
@@ -48,9 +52,14 @@ app.get('/publicar', (req, res) => {
     res.render('insVid');
 });
 app.get('/suporte', async (req, res) => {
-    let mensagensSuporte = await mensagemSuporte.find({});
-    let usuario = req.session.usuarioLogado;
-    res.render('suporte', {mensagensSuporte: mensagensSuporte, usuario:usuario});
+    try{
+        let mensagensSuporte = await mensagemSuporte.find({});
+        let usuario = req.session.usuarioLogado;
+        res.render('suporte', {mensagensSuporte: mensagensSuporte, usuario:usuario});
+    }catch(erro){
+        logger.erro("Erro ao buscar criticas", erro.message);
+        res.status(500).send("Erro ao carregar a página de suporte.");
+    }
 });
 app.get('/login', (req, res) => {
     res.render('login');
@@ -62,6 +71,7 @@ app.get('/sair', (req, res)=>{
     req.session.destroy((erro) => {
         if (erro) {
             console.error("Erro ao encerrar a sessão:", erro);
+            logger.erro("Erro ao encerrar a sessão:", erro.message);
             return res.status(500).send("Erro ao tentar deslogar.");
         }
         res.redirect('/login');
@@ -104,8 +114,9 @@ app.post('/tratarInsVid', (req, res) => {
                     idUsuario: req.session.usuarioLogado.id 
                 });
                 res.redirect('/');
-            } catch (dbError) {
-                console.error("Erro ao salvar no banco:", dbError);
+            } catch (erro) {
+                console.error("Erro ao salvar no banco:", erro);
+                logger.erro("Erro ao salvar no banco:", erro.message);
                 res.status(500).send("Erro ao salvar as informações do vídeo ou capa no banco de dados.");
             }
         });
@@ -172,12 +183,14 @@ app.post('/tratarUpdVid', async (req, res) => {
                 videoAtualizado.descricao = descricao;
                 await videoAtualizado.save();
                 res.redirect('/');
-            } catch (dbError) {
-                console.error("Erro ao salvar no banco:", dbError);
+            } catch (erro) {
+                console.error("Erro ao salvar no banco:", erro);
+                logger.erro("Erro ao salvar no banco:", erro.message);
                 res.status(500).send("Erro ao salvar as informações do vídeo ou capa no banco de dados.");
             }
     }catch(erro){
         console.error("Erro ao atualizar no banco:", erro);
+        logger.erro("Erro ao atualizar no banco:", erro.message);
         res.status(500).send("Erro ao salvar as modificações do vídeo no sistema.");
     }
 });
@@ -204,8 +217,8 @@ app.post('/tratarUpdCritica', async (req, res) => {
     res.render('suporte', {mensagensSuporte:mensagensSuporte, usuario:usuario});
 });
 app.post('/tratarUpdComentario', async (req, res) => {
-    id = req.body.id;
-    texto = req.body.texto;
+    let id = req.body.id;
+    let texto = req.body.texto;
     let comentario = await db.Comentarios.findByPk(id, {include: db.Videos});
     if (!comentario) {
         return res.status(404).send("comentario não encontrado.");
@@ -233,6 +246,7 @@ app.post('/tratarSign', async (req, res) => {
         return res.redirect('/login');
     }
   } catch (erro) {
+    logger.erro("Erro interno do servidor:", erro.message);
     return res.status(500).json({ erro: "Erro interno do servidor." });
   }
 });
@@ -264,8 +278,9 @@ app.post('/comentar', async (req, res) => {
             idVideo: idVideo
         });
         res.redirect("/"+idVideo);
-    } catch (dbError) {
-        console.error("Erro ao salvar no banco:", dbError);
+    } catch (erro) {
+        console.error("Erro ao salvar no banco:", erro);
+        logger.erro("Erro ao salvar no banco:", erro.message);
         res.status(500).send("Erro ao salvar as informações do comentário no banco de dados.");
     }
 });
@@ -279,6 +294,7 @@ app.get('/pesquisar', async(req, res) =>{
         return res.render('index', {listaVideos:listaVideos, usuario: req.session.usuarioLogado});
     }catch(erro){
         console.error("Erro ao buscar vídeos:", erro);
+        logger.erro("Erro ao buscar vídeos:", erro.message);
         res.status(500).send("Erro ao carregar a página inicial.");
     }
 });
@@ -295,6 +311,7 @@ app.get('/:id', async (req, res) =>{
         res.render('verVid', { video: video, listaComentarios: listaComentarios, usuario:usuario});
     } catch (erro) {
         console.error(erro);
+        logger.erro("Erro ao carregar o vídeo:", erro.message);
         res.status(500).send("Erro ao carregar o vídeo.");
     }
 });
@@ -305,16 +322,17 @@ app.get('/apagar/:id', async (req, res) =>{
         if (!video) {
             return res.status(404).send("Vídeo não encontrado.");
         }
-        if(fs.existsSync(video.url)){
+        if(fs.existsSync(path.join(__dirname, video.url))){
             fs.unlinkSync(path.join(__dirname, video.url));
         }
-        if(fs.existsSync(video.urlCapa)){
+        if(fs.existsSync(path.join(__dirname, video.urlCapa))){
             fs.unlinkSync(path.join(__dirname, video.urlCapa));
         }
         await video.destroy();
         res.redirect('/');
     } catch (erro) {
         console.error(erro);
+        logger.erro("Erro ao excluir o vídeo:", erro.message);
         res.status(500).send("Erro ao excluir o vídeo.");
     }
 });
@@ -330,6 +348,7 @@ app.post('/apagarComentario/:id', async (req, res) =>{
         res.redirect("/"+idVideo);
     } catch (erro) {
         console.error("Erro ao apagar comentário:", erro);
+        logger.erro("Erro ao excluir o comentário:", erro.message);
         res.status(500).send("Erro ao excluir o comentário.");
     }
 });
@@ -359,8 +378,9 @@ app.post('/criarCritica', async(req, res) =>{
     }).save().then(() => {
       console.log('mensagem para suporte cadastrado');
     }).catch((erro) => {
-      console.log('erro');
-      console.log(erro)
+        console.log('erro ao cadastrar critica.');
+        logger.erro("erro ao cadastrar critica:", erro.message);
+        return res.status(500).send("erro ao cadastrar critica.");
     });
     let mensagensSuporte = await mensagemSuporte.find({});
     res.render('suporte', {mensagensSuporte:mensagensSuporte, usuario:usuario});
@@ -370,7 +390,7 @@ app.post('/apagarCritica', async(req, res) =>{
     let usuario = req.session.usuarioLogado;
     let idUsuario = usuario.id;
     try{
-        mensagemDeletada = await mensagemSuporte.findOneAndDelete({
+        let mensagemDeletada = await mensagemSuporte.findOneAndDelete({
             texto: texto,
             idUsuario: idUsuario
         });
@@ -381,7 +401,8 @@ app.post('/apagarCritica', async(req, res) =>{
         return res.render('suporte', {mensagensSuporte:mensagensSuporte, usuario:usuario});
     }catch(erro){
         console.error("Erro ao apagar crítica:", erro);
-        return res.status(500).json({ erro: "Erro interno do servidor." });
+      logger.erro("erro ao apagar critica:", erro.message);
+    return res.status(500).json({ erro: "erro ao apagar critica." });
     }
 });
 app.listen(8081, () => {
