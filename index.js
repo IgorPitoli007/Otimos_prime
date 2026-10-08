@@ -7,7 +7,8 @@ const app = express();
 const fs = require('fs');
 const db = require('./config/db');
 const comentarios = require('./models/comentarios');
-const { where } = require('sequelize');
+const { where, or } = require('sequelize');
+const { Op } = require('sequelize'); 
 const db_mongoose = require('./config/db_mongoose');
 const mongoose = require('mongoose');
 const mensagemSuporte = require('./models/suporte');
@@ -32,7 +33,7 @@ app.use('/css', express.static(path.join(__dirname, 'css')));
 app.use('/videos', express.static(path.join(__dirname, 'videos')));
 app.get('/', async (req, res) => {
     try{
-        const listaVideos = await db.Videos.findAll({ raw: true });
+        let listaVideos = await db.Videos.findAll({ raw: true });
         if(req.session.usuarioLogado){
             return res.render('index', {listaVideos, usuario: req.session.usuarioLogado});
         }else{
@@ -266,6 +267,19 @@ app.post('/comentar', async (req, res) => {
     } catch (dbError) {
         console.error("Erro ao salvar no banco:", dbError);
         res.status(500).send("Erro ao salvar as informações do comentário no banco de dados.");
+    }
+});
+app.get('/pesquisar', async(req, res) =>{
+    if(!req.session.usuarioLogado){
+        return res.render('login', {logado:false});
+    }
+    let texto = req.query.texto;
+    try{
+        let listaVideos = await db.Videos.findAll({where: {titulo: {[db.Sequelize.Op.like]: `%${texto}%`}}, raw: true });
+        return res.render('index', {listaVideos:listaVideos, usuario: req.session.usuarioLogado});
+    }catch(error){
+        console.error("Erro ao buscar vídeos:", error);
+        res.status(500).send("Erro ao carregar a página inicial.");
     }
 });
 app.get('/:id', async (req, res) =>{

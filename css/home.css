@@ -29,6 +29,20 @@ header a {
     border-radius: 4px; 
     font-weight: bold;
 }
+input[type = "submit"] {
+    background: #e50914; 
+    color: #fff; 
+    text-decoration: none;
+    padding: 8px 16px; 
+    border-radius: 4px; 
+    font-weight: bold;
+}
+input[type = "text"] {
+    text-decoration: none;
+    padding: 8px 16px; 
+    border-radius: 4px; 
+    font-weight: bold;
+}
 h2 { 
     padding: 24px 4% 12px; 
     font-size: 20px; 
