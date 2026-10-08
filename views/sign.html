@@ -51,5 +51,10 @@
                 alert("Este email já está em uso.");
         </script>
     <% } %>
+    <% if (typeof campos !== 'undefined') { %>
+        <script>
+                alert("Preencha todos os campos.");
+        </script>
+    <% } %>
 </body>
 </html>

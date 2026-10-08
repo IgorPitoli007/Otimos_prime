@@ -78,8 +78,14 @@ app.post('/tratarInsVid', (req, res) => {
     let titulo = req.body.titulo;
     let descricao = req.body.descricao;
     let autor = req.body.autor;
+    if (!titulo.trim() || !descricao.trim() || !autor.trim()) {
+        return res.render('insVid', {campos:false});
+    }
     if (!req.files || !req.files.video) {
-        return res.status(400).send('Nenhum arquivo enviado.');
+        return res.render('insVid', {video:false});
+    }
+    if (!req.files || !req.files.capa) {
+        return res.render('insVid', {capa:false});
     }
     let video = req.files.video;
     let capa = req.files.capa;
@@ -229,27 +235,33 @@ app.post('/tratarSign', async (req, res) => {
     let email = req.body.email;
     let senha = req.body.senha;
     try {
-    let usuarioExistente = await db.Usuarios.findOne({ 
-      where: { email: email } 
-    });
-    if (usuarioExistente) {
-        return res.render('sign', {email:false})
-    }else{
-        await db.Usuarios.create({
-            nome:nome,
-            email:email,
-            senha:senha,
+        if (!nome.trim() || !email.trim() || !senha.trim()) {
+            return res.render('sign', {campos:false});
+        }
+        let usuarioExistente = await db.Usuarios.findOne({ 
+            where: { email: email } 
         });
-        return res.redirect('/login');
+        if (usuarioExistente) {
+            return res.render('sign', {email:false});
+        }else{
+            await db.Usuarios.create({
+                nome:nome,
+                email:email,
+                senha:senha,
+            });
+            return res.redirect('/login');
+        }
+    } catch (erro) {
+        logger.erro("Erro interno do servidor:", erro.message);
+        return  res.status(500).json({ erro: "Erro interno do servidor." });
     }
-  } catch (erro) {
-    logger.erro("Erro interno do servidor:", erro.message);
-    return res.status(500).json({ erro: "Erro interno do servidor." });
-  }
 });
 app.post('/tratarLogin', async (req, res) => {
     let email = req.body.email;
     let senha = req.body.senha;
+    if (!email.trim() || !senha.trim()) {
+        return res.render('login', {campos:false});
+    }
     let usuario = await db.Usuarios.findOne({ 
         where: { email: email } 
     });
@@ -274,11 +286,11 @@ app.post('/comentar', async (req, res) => {
             idUsuario: idUsuario,
             idVideo: idVideo
         });
-        res.redirect("/"+idVideo);
+        return res.redirect("/"+idVideo);
     } catch (erro) {
         console.error("Erro ao salvar no banco:", erro);
         logger.erro("Erro ao salvar no banco:", erro.message);
-        res.status(500).send("Erro ao salvar as informações do comentário no banco de dados.");
+        return res.status(500).send("Erro ao salvar as informações do comentário no banco de dados.");
     }
 });
 app.get('/pesquisar', async(req, res) =>{
@@ -369,21 +381,21 @@ app.get('/editar/:id', async (req, res) =>{
     res.render('updVid', {video});
 });
 app.post('/criarCritica', async(req, res) =>{
-    let texto = req.body.critica;
-    let usuario = req.session.usuarioLogado;
-    let idUsuario = usuario.id;
-    await new mensagemSuporte({
-      texto: texto,
-      idUsuario:idUsuario
-    }).save().then(() => {
-      console.log('mensagem para suporte cadastrado');
-    }).catch((erro) => {
+    try{
+        let texto = req.body.critica;
+        let usuario = req.session.usuarioLogado;
+        let idUsuario = usuario.id;
+        await new mensagemSuporte({
+        texto: texto,
+        idUsuario:idUsuario
+        }).save()
+        let mensagensSuporte = await mensagemSuporte.find({});
+        res.render('suporte', {mensagensSuporte:mensagensSuporte, usuario:usuario});
+    }catch(erro){
         console.log('erro ao cadastrar critica.');
         logger.erro("erro ao cadastrar critica:", erro.message);
         return res.status(500).send("erro ao cadastrar critica.");
-    });
-    let mensagensSuporte = await mensagemSuporte.find({});
-    res.render('suporte', {mensagensSuporte:mensagensSuporte, usuario:usuario});
+    }
 });
 app.post('/apagarCritica', async(req, res) =>{
     let texto = req.body.texto;

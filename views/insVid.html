@@ -43,6 +43,21 @@
             <button type="submit">Publicar</button>
         </form>
     </main>
+    <% if (typeof campos !== 'undefined') { %>
+        <script>
+                alert("Preencha todos os campos.");
+        </script>
+    <% } %>
+    <% if (typeof capa !== 'undefined') { %>
+        <script>
+                alert("video deve possuir uma capa.");
+        </script>
+    <% } %>
+    <% if (typeof video !== 'undefined') { %>
+        <script>
+                alert("video deve possuir um video.");
+        </script>
+    <% } %>
     <script>
         let video = document.getElementById('video');
         const nomeVideo = document.getElementById('nomeVideo');

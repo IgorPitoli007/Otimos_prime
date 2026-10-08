@@ -28,6 +28,11 @@
             <button type="submit">Entrar</button>
         </form>
     </main>
+    <% if (typeof campos !== 'undefined') { %>
+        <script>
+                alert("Preencha todos os campos.");
+        </script>
+    <% } %>
     <% if (typeof email !== 'undefined') { %>
         <script>
             alert("email ou senha incorretos.");
