@@ -313,9 +313,11 @@ app.post('/criarCritica', async(req, res) =>{
 app.post('/apagarCritica', async(req, res) =>{
     let texto = req.body.texto;
     let usuario = req.session.usuarioLogado;
+    let idUsuario = usuario.id;
     try{
         mensagemDeletada = await mensagemSuporte.findOneAndDelete({
-            texto: texto
+            texto: texto,
+            idUsuario: idUsuario
         });
         if(!mensagemDeletada){
             return res.status(404).json({ erro: "Crítica não encontrada." });
