@@ -138,7 +138,10 @@ app.post('/tratarUpdVid', async (req, res) => {
             if(req.files.video){
                 let caminhoDestinoVideo = path.join(__dirname, 'videos', nomeVideo);
                 let caminhoRelativoVideo = path.join("videos", nomeVideo);
-                fs.unlinkSync(path.join(__dirname, videoAtualizado.url));
+                let VideoAntigo = path.join(__dirname, videoAtualizado.url);
+                if(fs.existsSync(VideoAntigo)){
+                    fs.unlinkSync(path.join(__dirname, videoAtualizado.url));
+                }
                 await video.mv(caminhoDestinoVideo, async (err) => {
                     if(err){
                         return res.status(500).send(err);
@@ -149,7 +152,10 @@ app.post('/tratarUpdVid', async (req, res) => {
             if(req.files.capa){
                 let caminhoDestinoCapa = path.join(__dirname, 'videos', nomeCapa);
                 let caminhoRelativoCapa = path.join("videos", nomeCapa);
-                fs.unlinkSync(path.join(__dirname, videoAtualizado.urlCapa));
+                let capaAntiga = path.join(__dirname, videoAtualizado.urlCapa);
+                if(fs.existsSync(capaAntiga)){
+                    fs.unlinkSync(path.join(__dirname, videoAtualizado.urlCapa));
+                }
                 await capa.mv(caminhoDestinoCapa, async (err) => {
                     if(err){
                         return res.status(500).send(err);
