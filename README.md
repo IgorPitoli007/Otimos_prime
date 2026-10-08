@@ -1,6 +1,13 @@
-# OtimosPlay
+# OtimosPrime
 
 Plataforma de vídeos estilo rede social, feita com Node.js, Express, PostgreSQL (via Sequelize) e EJS. Permite criar conta, logar, publicar vídeos com capa, comentar, editar e excluir vídeos/comentários.
+
+## Autores
+
+| Nome | RA |
+|------|----|
+| Luiz Pedro Pereira dos Santos | 2648024 |
+| Igor Rafael Pitoli | 2787849 |
 
 ## Funcionalidades
 
@@ -115,7 +122,3 @@ Plataforma de vídeos estilo rede social, feita com Node.js, Express, PostgreSQL
 | POST | `/comentar` | Adiciona um comentário |
 | POST | `/apagarComentario/:id` | Exclui um comentário |
 
-## Observações
-
-- As senhas são armazenadas em texto puro no banco (sem criptografia) — recomenda-se adicionar hashing (ex: bcrypt) antes de usar em produção.
-- A pasta `videos/` precisa existir na raiz do projeto para o upload funcionar; se não existir, crie manualmente antes de rodar.

@@ -1,0 +1,3 @@
+[2026-10-08T19:49:31.919Z] erro ao cadastrar critica:: mensagemSuporte validation failed: texto: Path `texto` is required.
+[2026-10-08T20:09:12.329Z] Erro ao buscar vídeos:: id is not defined
+[2026-10-08T20:09:12.356Z] Erro ao salvar no banco:: Cannot set headers after they are sent to the client

@@ -17,7 +17,6 @@ mongoose.connect(db_mongoose.connection)
     console.log('conectado');
 }).catch((erro) => {
     console.log('erro');
-    console.error(erro);
     logger.erro("Erro ao conectar no mongodb:", erro.message);
 });
 // db.sequelize.sync({ force: true });
@@ -40,7 +39,6 @@ app.get('/', async (req, res) => {
             return res.redirect('/login');
         }
     }catch(erro){
-        console.error("Erro ao buscar vídeos:", erro);
         logger.erro("Erro ao buscar vídeos", erro.message);
         res.status(500).send("Erro ao carregar a página inicial.");
     }
@@ -76,7 +74,6 @@ app.get('/sair', (req, res)=>{
     }
     req.session.destroy((erro) => {
         if (erro) {
-            console.error("Erro ao encerrar a sessão:", erro);
             logger.erro("Erro ao encerrar a sessão:", erro.message);
             return res.status(500).send("Erro ao tentar deslogar.");
         }
@@ -90,7 +87,7 @@ app.post('/tratarInsVid', async (req, res) => {
     let titulo = req.body.titulo;
     let descricao = req.body.descricao;
     let autor = req.body.autor;
-    if (!titulo.trim() || !descricao.trim() || !autor.trim()) {
+    if (!titulo || !descricao || !autor || !titulo.trim() || !descricao.trim() || !autor.trim()) {
         return res.render('insVid', {campos:false});
     }
     if (!req.files || !req.files.video) {
@@ -134,7 +131,6 @@ app.post('/tratarInsVid', async (req, res) => {
         });
         res.redirect('/');
     } catch (erro) {
-        console.error("Erro ao salvar no banco:", erro);
         logger.erro("Erro ao salvar no banco:", erro.message);
         res.status(500).send("Erro ao salvar as informações do vídeo ou capa no banco de dados.");
     }
@@ -147,15 +143,20 @@ app.post('/tratarUpdVid', async (req, res) => {
     let descricao = req.body.descricao;
     let autor = req.body.autor;
     let id = req.body.id;
-    if (!titulo.trim() || !descricao.trim() || !autor.trim()) {
-        let video = await db.Videos.findByPk(id);
-        if (!video) {
-            return res.status(404).send("Vídeo não encontrado.");
-        }
-        return res.render('updVid', {campos:false, video});
-    }
     let capa, video, nomeCapa, nomeVideo;
     let timestamp = Date.now();
+    try{
+        if (!titulo || !descricao || !autor || !titulo.trim() || !descricao.trim() || !autor.trim()) {
+            let video = await db.Videos.findByPk(id);
+            if (!video) {
+                return res.status(404).send("Vídeo não encontrado.");
+            }
+            return res.render('updVid', {campos:false, video});
+        }
+    }catch(erro){
+        logger.erro("erro ao atualizar video:", erro.message);
+        return res.status(500).json({ erro: "erro ao atualizar video." });
+    }
     if (req.files) {
         if(req.files.video){
             video = req.files.video;
@@ -213,12 +214,10 @@ app.post('/tratarUpdVid', async (req, res) => {
                 await videoAtualizado.save();
                 res.redirect('/');
             } catch (erro) {
-                console.error("Erro ao salvar no banco:", erro);
                 logger.erro("Erro ao salvar no banco:", erro.message);
                 res.status(500).send("Erro ao salvar as informações do vídeo ou capa no banco de dados.");
             }
     }catch(erro){
-        console.error("Erro ao atualizar no banco:", erro);
         logger.erro("Erro ao atualizar no banco:", erro.message);
         res.status(500).send("Erro ao salvar as modificações do vídeo no sistema.");
     }
@@ -230,11 +229,19 @@ app.post('/UpdCritica', async (req, res) => {
     let texto = req.body.texto;
     let usuario = req.session.usuarioLogado;
     let idUsuario = usuario.id;
-    let critica = await mensagemSuporte.findOne({
-        texto: texto,
-        idUsuario: idUsuario
-    });
-    res.render('updCri', {critica:critica});
+    try{
+        let critica = await mensagemSuporte.findOne({
+            texto: texto,
+            idUsuario: idUsuario
+        });
+        if (!critica) {
+            return res.status(404).send("Crítica não encontrada.");
+        }
+        return res.render('updCri', {critica:critica});
+    }catch(erro){
+        logger.erro("critica não encontrada:", erro.message);
+        return res.status(500).send("critica não encontrada.");
+    }
 });
 app.post('/tratarUpdCritica', async (req, res) => {
     if(!req.session.usuarioLogado){
@@ -244,12 +251,24 @@ app.post('/tratarUpdCritica', async (req, res) => {
     let textoNovo = req.body.textoNovo;
     let usuario = req.session.usuarioLogado;
     let idUsuario = req.session.usuarioLogado.id;
-    await mensagemSuporte.findOneAndUpdate(
-        { texto:texto, idUsuario:idUsuario },
-        { texto:textoNovo, idUsuario:idUsuario }
-    );
-    let mensagensSuporte = await mensagemSuporte.find({});
-    res.render('suporte', {mensagensSuporte:mensagensSuporte, usuario:usuario});
+    try{
+        if (!textoNovo || !textoNovo.trim()) {
+            let critica = await mensagemSuporte.findOne({
+                texto: texto,
+                idUsuario: idUsuario
+            });
+            return res.render('updCri', {critica:critica, texto:false});
+        }
+        await mensagemSuporte.findOneAndUpdate(
+            { texto:texto, idUsuario:idUsuario },
+            { texto:textoNovo, idUsuario:idUsuario }
+        );
+        let mensagensSuporte = await mensagemSuporte.find({});
+        res.render('suporte', {mensagensSuporte:mensagensSuporte, usuario:usuario});
+    }catch(erro){
+        logger.erro("erro ao atualizar critica:", erro.message);
+        return res.status(500).send("Erro ao atualizar a crítica.");
+    }
 });
 app.post('/tratarUpdComentario', async (req, res) => {
     if(!req.session.usuarioLogado){
@@ -257,20 +276,28 @@ app.post('/tratarUpdComentario', async (req, res) => {
     }
     let id = req.body.id;
     let texto = req.body.texto;
-    let comentario = await db.Comentarios.findByPk(id, {include: db.Videos});
-    if (!comentario) {
-        return res.status(404).send("comentario não encontrado.");
+    try{
+        let comentario = await db.Comentarios.findByPk(id, {include: db.Videos});
+        if (!texto || !texto.trim()) {
+            return res.render('updCom', {comentario:comentario, texto:false});
+        }
+        if (!comentario) {
+            return res.status(404).send("comentario não encontrado.");
+        }
+        comentario.texto = texto;
+        await comentario.save();
+        res.redirect('/'+comentario.video.id);
+    }catch(erro){
+        logger.erro("erro ao atualizar comentario:", erro.message);
+        return res.status(500).send("erro ao atualizar comentario.");
     }
-    comentario.texto = texto;
-    await comentario.save();
-    res.redirect('/'+comentario.video.id);
 });
 app.post('/tratarSign', async (req, res) => {
     let nome = req.body.nome;
     let email = req.body.email;
     let senha = req.body.senha;
     try {
-        if (!nome.trim() || !email.trim() || !senha.trim()) {
+        if (!nome || !email || !senha || !nome.trim() || !email.trim() || !senha.trim()) {
             return res.render('sign', {campos:false});
         }
         let usuarioExistente = await db.Usuarios.findOne({ 
@@ -287,28 +314,33 @@ app.post('/tratarSign', async (req, res) => {
             return res.redirect('/login');
         }
     } catch (erro) {
-        logger.erro("Erro interno do servidor:", erro.message);
-        return  res.status(500).json({ erro: "Erro interno do servidor." });
+        logger.erro("Erro ao criar conta:", erro.message);
+        return res.status(500).send("Erro ao criar conta.");
     }
 });
 app.post('/tratarLogin', async (req, res) => {
     let email = req.body.email;
     let senha = req.body.senha;
-    if (!email.trim() || !senha.trim()) {
-        return res.render('login', {campos:false});
-    }
-    let usuario = await db.Usuarios.findOne({ 
-        where: { email: email } 
-    });
-    if(usuario){
-        if(usuario.senha == senha){
-            req.session.usuarioLogado = {
-                id: usuario.id,
-            };
-            return res.redirect('/');
+    try{
+        if (!email || !senha || !email.trim() || !senha.trim()) {
+            return res.render('login', {campos:false});
         }
+        let usuario = await db.Usuarios.findOne({ 
+            where: { email: email } 
+        });
+        if(usuario){
+            if(usuario.senha == senha){
+                req.session.usuarioLogado = {
+                    id: usuario.id,
+                };
+                return res.redirect('/');
+            }
+        }
+        return res.render('login', {email:false});
+    }catch(erro){
+        logger.erro("Erro ao fazer login:", erro.message);
+        return res.status(500).send("Erro ao fazer login.");
     }
-    return res.render('login', {email:false});
 });
 app.post('/comentar', async (req, res) => {
     if(!req.session.usuarioLogado){
@@ -317,8 +349,24 @@ app.post('/comentar', async (req, res) => {
     let texto = req.body.texto;
     let idVideo = req.body.id;
     let idUsuario = req.session.usuarioLogado.id;
-
+    if (!texto || !texto.trim()) {
+        try{
+            let listaComentarios = await db.Comentarios.findAll({where: {idVideo:idVideo}, include: [{ model: db.Usuarios }]});
+            let video = await db.Videos.findByPk(idVideo, { raw: true });
+            if(!video){
+                return res.status(404).send("Vídeo não encontrado.");
+            }
+            return res.render('verVid', {video:video, listaComentarios:listaComentarios, usuario: req.session.usuarioLogado, texto:false});
+        }catch(erro){
+            logger.erro("Erro ao buscar vídeos:", erro.message);
+            return res.status(500).send("Erro ao carregar o vídeo.");
+        }
+    }
     try{
+        let video = await db.Videos.findByPk(idVideo, { raw: true });
+        if(!video){
+            return res.status(404).send("Vídeo não encontrado.");
+        }
         await db.Comentarios.create({
             texto:texto,
             idUsuario: idUsuario,
@@ -326,7 +374,6 @@ app.post('/comentar', async (req, res) => {
         });
         return res.redirect("/"+idVideo);
     } catch (erro) {
-        console.error("Erro ao salvar no banco:", erro);
         logger.erro("Erro ao salvar no banco:", erro.message);
         return res.status(500).send("Erro ao salvar as informações do comentário no banco de dados.");
     }
@@ -340,7 +387,6 @@ app.get('/pesquisar', async(req, res) =>{
         let listaVideos = await db.Videos.findAll({where: {titulo: {[db.Sequelize.Op.iLike]: `%${texto}%`}}, raw: true });
         return res.render('index', {listaVideos:listaVideos, usuario: req.session.usuarioLogado});
     }catch(erro){
-        console.error("Erro ao buscar vídeos:", erro);
         logger.erro("Erro ao buscar vídeos:", erro.message);
         res.status(500).send("Erro ao carregar a página inicial.");
     }
@@ -363,7 +409,6 @@ app.get('/:id', async (req, res) =>{
         let usuario = await db.Usuarios.findByPk(idUsuario, { raw: true });
         res.render('verVid', { video: video, listaComentarios: listaComentarios, usuario:usuario});
     } catch (erro) {
-        console.error(erro);
         logger.erro("Erro ao carregar o vídeo:", erro.message);
         res.status(500).send("Erro ao carregar o vídeo.");
     }
@@ -387,7 +432,6 @@ app.get('/apagar/:id', async (req, res) =>{
         await video.destroy();
         res.redirect('/');
     } catch (erro) {
-        console.error(erro);
         logger.erro("Erro ao excluir o vídeo:", erro.message);
         res.status(500).send("Erro ao excluir o vídeo.");
     }
@@ -406,7 +450,6 @@ app.post('/apagarComentario/:id', async (req, res) =>{
         await comentario.destroy();
         res.redirect("/"+idVideo);
     } catch (erro) {
-        console.error("Erro ao apagar comentário:", erro);
         logger.erro("Erro ao excluir o comentário:", erro.message);
         res.status(500).send("Erro ao excluir o comentário.");
     }
@@ -416,22 +459,32 @@ app.post('/UpdComentario/:id', async (req, res) =>{
         return res.render('login', {logado:false});
     }
     let id = req.params.id;
-    let comentario = await db.Comentarios.findByPk(id);
-    if (!comentario) {
-        return res.status(404).send("comentario não encontrado.");
+    try{
+        let comentario = await db.Comentarios.findByPk(id);
+        if (!comentario) {
+            return res.status(404).send("comentario não encontrado.");
+        }
+        res.render('updCom', {comentario:comentario});
+    }catch(erro){
+        logger.erro("erro ao atualizar comentario:", erro.message);
+        return res.status(500).send("erro ao atualizar comentario.");
     }
-    res.render('updCom', {comentario:comentario});
 });
 app.get('/editar/:id', async (req, res) =>{
-    if(!req.session.usuarioLogado){
-        return res.render('login', {logado:false});
+    try{
+        if(!req.session.usuarioLogado){
+            return res.render('login', {logado:false});
+        }
+        let id = req.params.id;
+        let video = await db.Videos.findByPk(id);
+        if (!video) {
+            return res.status(404).send("Vídeo não encontrado.");
+        }
+        res.render('updVid', {video});
+    }catch(erro){
+        logger.erro("video não encontrado:", erro.message);
+        return res.status(500).send("video não encontrado.");
     }
-    let id = req.params.id;
-    let video = await db.Videos.findByPk(id);
-    if (!video) {
-        return res.status(404).send("Vídeo não encontrado.");
-    }
-    res.render('updVid', {video});
 });
 app.post('/criarCritica', async(req, res) =>{
     if(!req.session.usuarioLogado){
@@ -441,6 +494,11 @@ app.post('/criarCritica', async(req, res) =>{
         let texto = req.body.critica;
         let usuario = req.session.usuarioLogado;
         let idUsuario = usuario.id;
+        if (!texto || !texto.trim()) {
+            let mensagensSuporte = await mensagemSuporte.find({});
+            let usuario = req.session.usuarioLogado;
+            return res.render('suporte', {texto:false, mensagensSuporte:mensagensSuporte, usuario:usuario} );
+        }
         await new mensagemSuporte({
         texto: texto,
         idUsuario:idUsuario
@@ -448,7 +506,6 @@ app.post('/criarCritica', async(req, res) =>{
         let mensagensSuporte = await mensagemSuporte.find({});
         res.render('suporte', {mensagensSuporte:mensagensSuporte, usuario:usuario});
     }catch(erro){
-        console.log('erro ao cadastrar critica.');
         logger.erro("erro ao cadastrar critica:", erro.message);
         return res.status(500).send("erro ao cadastrar critica.");
     }
@@ -471,9 +528,8 @@ app.post('/apagarCritica', async(req, res) =>{
         let mensagensSuporte = await mensagemSuporte.find({});
         return res.render('suporte', {mensagensSuporte:mensagensSuporte, usuario:usuario});
     }catch(erro){
-        console.error("Erro ao apagar crítica:", erro);
-      logger.erro("erro ao apagar critica:", erro.message);
-    return res.status(500).json({ erro: "erro ao apagar critica." });
+        logger.erro("erro ao apagar critica:", erro.message);
+        return res.status(500).json({ erro: "erro ao apagar critica." });
     }
 });
 app.listen(8081, () => {
