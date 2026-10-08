@@ -6,9 +6,19 @@ const SequelizeStore = require('connect-session-sequelize')(session.Store);
 const app = express();
 const fs = require('fs');
 const db = require('./config/db');
-const { where } = require('sequelize');
 const comentarios = require('./models/comentarios');
+const { where } = require('sequelize');
+const db_mongoose = require('./config/db_mongoose');
+const mongoose = require('mongoose');
+const mensagemSuporte = require('./models/suporte');
 
+mongoose.connect(db_mongoose.connection)
+.then(() => {
+  console.log('conectado');
+}).catch((err) => {
+  console.log('erro');
+  console.error(err);
+});
 // db.sequelize.sync({ force: true });
 db.sequelize.sync({ force: false });
 app.use(session({secret: '123456', store:new SequelizeStore({ db: db.sequelize}), resave: false, saveUninitialized: false, cookie: { secure: false }}));
@@ -35,6 +45,11 @@ app.get('/', async (req, res) => {
 });
 app.get('/publicar', (req, res) => {
     res.render('insVid');
+});
+app.get('/suporte', async (req, res) => {
+    let mensagensSuporte = await mensagemSuporte.find({});
+    let usuario = req.session.usuarioLogado;
+    res.render('suporte', {mensagensSuporte: mensagensSuporte, usuario:usuario});
 });
 app.get('/login', (req, res) => {
     res.render('login');
@@ -272,6 +287,21 @@ app.get('/editar/:id', async (req, res) =>{
         return res.status(404).send("Vídeo não encontrado.");
     }
     res.render('updVid', {video});
+});
+app.post('/criarCritica', async(req, res) =>{
+    let texto = req.body.critica;
+    let usuario = req.session.usuarioLogado;
+    let idUsuario = usuario.id;
+    new mensagemSuporte({
+      texto: texto,
+      idUsuario:idUsuario
+    }).save().then(() => {
+      console.log('mensagem para suporte cadastrado');
+    }).catch((err) => {
+      console.log('erro');
+    });
+    let mensagensSuporte = await mensagemSuporte.find({});
+    res.render('suporte', {mensagensSuporte: mensagensSuporte, usuario:usuario});
 });
 app.listen(8081, () => {
   console.log('Servidor rodando em http://localhost:8081');

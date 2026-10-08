@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publicar video</title>
+    <link rel="stylesheet" href="/css/ver.css">
+</head>
+<body>
+    <header>
+        <h1>OTIMOSPRIME</h1>
+        <a href="/">← Voltar para a home</a>
+    </header>
+    <main>
+        <section class="comentarios">
+            <form action="/criarCritica" method="post" class="form-comentario">
+                <input type="text" placeholder="Adicione um Critica..." name="critica" required>
+                <button type="submit">Enviar</button>
+            </form>
+            <div class="lista-comentarios">
+                <% mensagensSuporte.forEach(function(critica) { %>
+                    <div class="comentario">
+                        <div class="comentario-corpo">
+                            <p class="comentario-texto"><%= critica.texto %></p>
+                        </div>
+                        <% if(usuario.id == critica.idUsuario){ %>
+                            <form action="/apagarComentario/<%=  %>" method="post" class="form-excluir">
+                                <button type="submit">excluir</button>
+                            </form>
+                            <form action="" method="post" class="form-atualizar">
+                                <button type="submit">Atualizar</button>
+                            </form>
+                        <% } %>
+                    </div>
+                <% }); %>
+                <% if (mensagensSuporte.length === 0) { %>
+                        <p class="sem-comentarios">Nenhuma crítica ainda. Seja o primeiro a ajudar!</p>
+                <% } %>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
