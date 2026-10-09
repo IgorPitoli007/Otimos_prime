@@ -68,6 +68,7 @@
                 if(file &&  !file.type.startsWith('video/')){
                     alert("Somente arquivos de vídeo são aceitos.");
                     this.value = '';
+                    file = null;
                 }
                 nomeVideo.textContent = file ? file.name : 'Nenhum arquivo escolhido';
             }
@@ -77,6 +78,7 @@
                 if(file &&  !file.type.startsWith('image/')){
                     alert("Somente arquivos de imagem são aceitos.");
                     this.value = '';
+                    file = null;
                 }
                 nomeCapa.textContent = file ? file.name : 'Nenhum arquivo escolhido';
             }

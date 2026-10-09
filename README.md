@@ -121,4 +121,3 @@ Plataforma de vídeos estilo rede social, feita com Node.js, Express, PostgreSQL
 | GET | `/apagar/:id` | Exclui um vídeo |
 | POST | `/comentar` | Adiciona um comentário |
 | POST | `/apagarComentario/:id` | Exclui um comentário |
-
