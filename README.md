@@ -67,6 +67,17 @@ Plataforma de vídeos estilo rede social, feita com Node.js, Express, EJS e **do
 - [PostgreSQL](https://www.postgresql.org/) instalado e rodando localmente
 - [MongoDB Community](https://www.mongodb.com/docs/manual/administration/install-community/) instalado e rodando localmente (veja a seção abaixo)
 
+## Onde digitar os comandos
+
+Todos os comandos deste README são digitados no **terminal do VS Code** (abra com `Ctrl + '` ou pelo menu **Terminal > Novo Terminal**), com a pasta do projeto aberta. Duas exceções, em que o comando é digitado **dentro de outro programa**:
+
+| Quando o terminal mostra | Você está em | Para sair |
+|---|---|---|
+| `postgres=#` | `psql` (comandos SQL, terminam com `;`) | `\q` |
+| `test>` | `mongosh` (comandos do Mongo) | `exit` |
+
+Os comandos com `sudo` pedem a senha do Ubuntu. Ela não aparece enquanto você digita, é normal.
+
 ## Como rodar o projeto
 
 1. **Clone o repositório**
@@ -89,11 +100,19 @@ Plataforma de vídeos estilo rede social, feita com Node.js, Express, EJS e **do
 
 4. **Crie o banco no PostgreSQL**
 
-   Entre no psql e crie o banco com o mesmo nome configurado em `config/db.js`:
+   Primeiro entre no `psql`, digitando no terminal do VS Code:
+   ```bash
+   sudo -u postgres psql
+   ```
+   O terminal passa a mostrar `postgres=#`. Agora você está dentro do Postgres: digite o comando SQL abaixo (com o `;` no final), com o mesmo nome configurado em `config/db.js`:
    ```sql
    CREATE DATABASE otimosprime;
    ```
-   As tabelas são criadas automaticamente na primeira execução.
+   Deve responder `CREATE DATABASE`. Para sair do `psql` e voltar ao terminal normal:
+   ```sql
+   \q
+   ```
+   As tabelas são criadas automaticamente na primeira execução. Se o Postgres ainda não está instalado, veja a seção "Instalando o PostgreSQL no Ubuntu" mais abaixo (que também mostra como definir a senha do usuário `postgres`).
 
 5. **Configure a conexão com o Postgres**
 
@@ -126,6 +145,18 @@ Plataforma de vídeos estilo rede social, feita com Node.js, Express, EJS e **do
    http://localhost:8081
    ```
    Na primeira vez, crie uma conta pela tela de cadastro antes de logar.
+
+## Nas próximas vezes que for rodar
+
+A instalação dos bancos é feita só uma vez. Depois, no terminal do VS Code, na pasta do projeto:
+
+```bash
+sudo systemctl start postgresql
+sudo systemctl start mongod
+node index.js
+```
+
+Se os serviços já estiverem ativos, os dois primeiros comandos não fazem mal. Para conferir: `sudo systemctl status postgresql` e `sudo systemctl status mongod`.
 
 ## Instalando o PostgreSQL no Ubuntu
 
@@ -166,7 +197,23 @@ sudo systemctl enable mongod
 sudo systemctl status mongod
 ```
 
-O `status` deve mostrar `active (running)`. Para testar, rode `mongosh` e, dentro dele, `db.runCommand({ ping: 1 })`, que deve responder `{ ok: 1 }`.
+O `status` deve mostrar `active (running)` (aperte `q` para sair da tela do status). Para testar, digite no terminal:
+
+```bash
+mongosh
+```
+
+Dentro do `mongosh` (o terminal passa a mostrar `test>`), digite:
+
+```js
+db.runCommand({ ping: 1 })
+```
+
+Deve responder `{ ok: 1 }`. Depois saia com:
+
+```js
+exit
+```
 
 **Ubuntu 26.04:** o repositório oficial ainda não publica pacotes para essa versão, por isso a linha acima usa o repositório do Ubuntu 24.04 (`noble`).
 
